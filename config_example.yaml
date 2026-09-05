@@ -1,0 +1,152 @@
+# BADNA Configuration (YAML format)
+# Comprehensive configuration with all thresholds moved out of code
+# Bug 11 Fix: All thresholds configurable at runtime
+
+# Core algorithm parameters (Requirements 18.2-18.5)
+embedding_dimensions: 128
+similarity_threshold: 0.70
+novelty_threshold: 0.80
+confidence_threshold: 0.60
+
+# Bug Fix: All BSF thresholds configurable
+bsf_thresholds:
+  highly_similar: 0.85      # >= 0.85: Highly similar 
+  moderately_similar: 0.60  # 0.60-0.85: Moderately similar
+  campaign_match: 0.70      # > 0.70: Campaign match required
+
+# Bug Fix: All NSF thresholds configurable  
+nsf_thresholds:
+  highly_novel: 0.80        # >= 0.80: Highly novel (zero-day)
+  moderately_novel: 0.50    # 0.50-0.80: Moderately novel (variant)
+  small_kb_penalty: 10      # KB < 10 patterns: apply confidence penalty
+  
+# Bug Fix: All CCF thresholds configurable
+ccf_thresholds:
+  small_kb_threshold: 50    # KB < 50: apply confidence penalty
+  uncertainty_threshold: 0.50  # confidence < 0.5: apply penalty
+  accuracy_correlation_margin: 0.05  # 5% margin for accuracy correlation
+
+# Bug Fix: All risk scoring thresholds configurable
+risk_thresholds:
+  critical: 0.85
+  high: 0.70  
+  medium: 0.50
+  low: 0.30
+  # Risk adjustment factors
+  apt_ransomware_bonus: 0.20    # +20% for APT/Ransomware
+  benign_penalty: 0.50          # -50% for Benign  
+  zero_day_bonus: 0.20          # +0.2 for novelty > 0.8
+  confidence_penalty: 0.80      # *= 0.8 for confidence < 0.5
+  intent_severity_bonus: 0.15   # +0.15 for lateral_movement/exfiltration
+
+# Bug Fix: All classification thresholds configurable
+classification_thresholds:
+  uncertainty_threshold: 0.60   # confidence < 0.6: flag as uncertain
+  multi_class_difference: 0.10  # probabilities within 0.1: flag multi-class uncertainty
+  minimum_class_samples: 20     # < 20 samples: apply class imbalance correction
+  target_accuracy: 0.85         # >= 85% classification accuracy required
+
+# Bug Fix: All feature extraction thresholds configurable
+feature_thresholds:
+  min_feature_dimensions: 64    # >= 64 dimensions required
+  normalization_min: 0.0       # normalize to [0.0, 1.0]
+  normalization_max: 1.0
+  clustering_coefficient_threshold: 0.5
+  centrality_percentile_threshold: 0.95
+
+# Bug Fix: All graph construction thresholds configurable
+graph_thresholds:
+  max_graph_size: 1000          # Maximum nodes before pruning
+  min_graph_size: 5             # Minimum viable graph size
+  edge_weight_threshold: 0.1    # Minimum edge weight to keep
+  temporal_window_seconds: 3600 # 1 hour temporal correlation window
+  pruning_priority_threshold: 0.8  # Keep edges with importance > 0.8
+
+# Storage and processing limits (Requirements 18.7-18.9)
+knowledge_base_path: "knowledge_base/"
+batch_size: 20
+max_retention_entries: 10000   # Knowledge base retention limit
+retention_days: 90             # Keep patterns for 90 days
+high_confidence_threshold: 0.85  # Keep high-confidence patterns longer
+
+# Performance tuning 
+max_memory_mb: 4096
+query_timeout_ms: 100          # Requirement 16.5: < 100ms similarity queries
+processing_timeout_s: 30       # Requirement 16.1: < 30s per dataset  
+similarity_cache_ttl_minutes: 5
+embedding_batch_size: 100      # Process 100 embeddings per batch
+
+# Bug Fix: Knowledge Base Guard thresholds
+knowledge_base_guard:
+  empty_kb_novelty: 1.0        # Return novelty=1.0 when KB empty
+  empty_kb_confidence: "LOW"   # Return confidence=LOW when KB empty  
+  min_kb_size_for_bsf: 1       # Minimum KB size to run BSF
+  min_kb_size_for_nsf: 1       # Minimum KB size to run NSF
+  skip_campaign_match_on_empty: true  # Skip campaign matching when KB empty
+
+# Logging configuration (Requirements 19.1-19.8)
+log_level: "INFO"
+log_format: "json"             # json|text
+log_file: "logs/badna.log"
+max_log_size_mb: 100
+log_backup_count: 5
+
+# Structured logging thresholds
+log_thresholds:
+  performance_warning_ms: 1000   # Warn if operations take > 1s
+  memory_warning_mb: 3072        # Warn if memory usage > 3GB 
+  error_aggregation_window: 300  # Aggregate similar errors for 5min
+  
+# API settings
+api_port: 8080
+api_host: "localhost"
+rate_limit_requests_per_minute: 60
+
+# Bug Fix: Module fault tolerance settings
+fault_tolerance:
+  max_retries: 3                # Max retry attempts per component
+  retry_delay_seconds: 1        # Delay between retries
+  circuit_breaker_threshold: 5  # Failures before circuit opens
+  circuit_breaker_timeout: 60   # Seconds before circuit retry
+  
+  # Component-specific timeouts  
+  component_timeouts:
+    BehaviorCaptureEngine: 10
+    d-BEF: 15
+    BSF: 5 
+    NSF: 8
+    CCF: 3
+    AIInvestigator: 12
+    RiskScorer: 2
+    AdaptiveDefenseIntelligence: 5
+
+# Graceful degradation settings
+degradation:
+  enable_fallbacks: true        # Enable graceful degradation
+  conservative_risk_score: 0.70 # Default risk when scoring fails
+  default_threat_class: "Unknown"
+  default_confidence: 0.50
+  log_degradation_events: true
+
+# Model evolution and learning thresholds  
+learning_thresholds:
+  retraining_trigger_patterns: 100    # Retrain when KB grows by 100 patterns
+  performance_degradation_threshold: 0.05  # 5% degradation triggers retrain
+  cross_validation_folds: 5
+  validation_split: 0.2
+  learning_rate_decay: 0.95
+  early_stopping_patience: 10
+
+# Data validation thresholds
+validation_thresholds:
+  max_event_age_hours: 168     # 1 week max event age
+  min_events_per_graph: 5      # Minimum events to build graph
+  max_events_per_graph: 10000  # Maximum events per graph
+  required_event_fields: ["event_type", "timestamp", "event_data"]
+  
+# Security and compliance
+security:
+  log_sensitive_data: false    # Never log sensitive information
+  anonymize_user_data: true    # Anonymize PII in logs
+  encrypt_knowledge_base: false  # Encrypt KB at rest (future feature)
+  audit_log_retention_days: 365

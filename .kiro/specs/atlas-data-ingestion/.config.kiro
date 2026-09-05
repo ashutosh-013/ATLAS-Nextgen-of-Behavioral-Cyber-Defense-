@@ -1,0 +1,6 @@
+{
+  "specName": "atlas-data-ingestion",
+  "version": "1.0.0",
+  "description": "ATLAS Production Data Infrastructure - Dataset parsers and ingestion pipeline to populate the BADNA Knowledge Base with 21M+ real-world cybersecurity records",
+  "workspaceRoot": "e:\\BADNA"
+}

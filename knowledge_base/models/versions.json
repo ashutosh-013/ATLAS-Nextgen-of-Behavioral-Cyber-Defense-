@@ -1,0 +1,211 @@
+{
+  "versions": [
+    {
+      "version_id": "v11_20260725_120911",
+      "version_name": "Retrained Model v11_20260725_120911",
+      "creation_timestamp": "2026-07-25T12:09:12.009401",
+      "model_files": {
+        "classifier": "knowledge_base\\models\\classifier_v11_20260725_120911.pkl",
+        "embedder": "knowledge_base\\models\\embedder_v11_20260725_120911.pkl",
+        "scaler": "knowledge_base\\models\\scaler_v11_20260725_120911.pkl"
+      },
+      "performance_metrics": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0,
+        "validation_samples": 13
+      },
+      "training_data_size": 65,
+      "description": "Triggered by performance_degradation, 65 patterns",
+      "is_active": true
+    },
+    {
+      "version_id": "v11_20260725_120910",
+      "version_name": "Retrained Model v11_20260725_120910",
+      "creation_timestamp": "2026-07-25T12:09:11.156367",
+      "model_files": {
+        "classifier": "knowledge_base\\models\\classifier_v11_20260725_120910.pkl",
+        "embedder": "knowledge_base\\models\\embedder_v11_20260725_120910.pkl",
+        "scaler": "knowledge_base\\models\\scaler_v11_20260725_120910.pkl"
+      },
+      "performance_metrics": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0,
+        "validation_samples": 13
+      },
+      "training_data_size": 64,
+      "description": "Triggered by performance_degradation, 64 patterns",
+      "is_active": false
+    },
+    {
+      "version_id": "v11_20260725_120909",
+      "version_name": "Retrained Model v11_20260725_120909",
+      "creation_timestamp": "2026-07-25T12:09:10.504702",
+      "model_files": {
+        "classifier": "knowledge_base\\models\\classifier_v11_20260725_120909.pkl",
+        "embedder": "knowledge_base\\models\\embedder_v11_20260725_120909.pkl",
+        "scaler": "knowledge_base\\models\\scaler_v11_20260725_120909.pkl"
+      },
+      "performance_metrics": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0,
+        "validation_samples": 13
+      },
+      "training_data_size": 64,
+      "description": "Triggered by performance_degradation, 64 patterns",
+      "is_active": false
+    },
+    {
+      "version_id": "v11_20260725_120909",
+      "version_name": "Retrained Model v11_20260725_120909",
+      "creation_timestamp": "2026-07-25T12:09:09.882804",
+      "model_files": {
+        "classifier": "knowledge_base\\models\\classifier_v11_20260725_120909.pkl",
+        "embedder": "knowledge_base\\models\\embedder_v11_20260725_120909.pkl",
+        "scaler": "knowledge_base\\models\\scaler_v11_20260725_120909.pkl"
+      },
+      "performance_metrics": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0,
+        "validation_samples": 13
+      },
+      "training_data_size": 64,
+      "description": "Triggered by performance_degradation, 64 patterns",
+      "is_active": false
+    },
+    {
+      "version_id": "v11_20260725_120908",
+      "version_name": "Retrained Model v11_20260725_120908",
+      "creation_timestamp": "2026-07-25T12:09:09.164722",
+      "model_files": {
+        "classifier": "knowledge_base\\models\\classifier_v11_20260725_120908.pkl",
+        "embedder": "knowledge_base\\models\\embedder_v11_20260725_120908.pkl",
+        "scaler": "knowledge_base\\models\\scaler_v11_20260725_120908.pkl"
+      },
+      "performance_metrics": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0,
+        "validation_samples": 13
+      },
+      "training_data_size": 62,
+      "description": "Triggered by performance_degradation, 62 patterns",
+      "is_active": false
+    },
+    {
+      "version_id": "v11_20260725_104425",
+      "version_name": "Retrained Model v11_20260725_104425",
+      "creation_timestamp": "2026-07-25T10:44:26.650439",
+      "model_files": {
+        "classifier": "knowledge_base\\models\\classifier_v11_20260725_104425.pkl",
+        "embedder": "knowledge_base\\models\\embedder_v11_20260725_104425.pkl",
+        "scaler": "knowledge_base\\models\\scaler_v11_20260725_104425.pkl"
+      },
+      "performance_metrics": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0,
+        "validation_samples": 13
+      },
+      "training_data_size": 62,
+      "description": "Triggered by performance_degradation, 62 patterns",
+      "is_active": false
+    },
+    {
+      "version_id": "v11_20260725_104424",
+      "version_name": "Retrained Model v11_20260725_104424",
+      "creation_timestamp": "2026-07-25T10:44:25.671544",
+      "model_files": {
+        "classifier": "knowledge_base\\models\\classifier_v11_20260725_104424.pkl",
+        "embedder": "knowledge_base\\models\\embedder_v11_20260725_104424.pkl",
+        "scaler": "knowledge_base\\models\\scaler_v11_20260725_104424.pkl"
+      },
+      "performance_metrics": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0,
+        "validation_samples": 13
+      },
+      "training_data_size": 61,
+      "description": "Triggered by performance_degradation, 61 patterns",
+      "is_active": false
+    },
+    {
+      "version_id": "v11_20260725_104424",
+      "version_name": "Retrained Model v11_20260725_104424",
+      "creation_timestamp": "2026-07-25T10:44:24.784345",
+      "model_files": {
+        "classifier": "knowledge_base\\models\\classifier_v11_20260725_104424.pkl",
+        "embedder": "knowledge_base\\models\\embedder_v11_20260725_104424.pkl",
+        "scaler": "knowledge_base\\models\\scaler_v11_20260725_104424.pkl"
+      },
+      "performance_metrics": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0,
+        "validation_samples": 13
+      },
+      "training_data_size": 61,
+      "description": "Triggered by performance_degradation, 61 patterns",
+      "is_active": false
+    },
+    {
+      "version_id": "v11_20260725_104423",
+      "version_name": "Retrained Model v11_20260725_104423",
+      "creation_timestamp": "2026-07-25T10:44:24.034002",
+      "model_files": {
+        "classifier": "knowledge_base\\models\\classifier_v11_20260725_104423.pkl",
+        "embedder": "knowledge_base\\models\\embedder_v11_20260725_104423.pkl",
+        "scaler": "knowledge_base\\models\\scaler_v11_20260725_104423.pkl"
+      },
+      "performance_metrics": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0,
+        "validation_samples": 13
+      },
+      "training_data_size": 61,
+      "description": "Triggered by performance_degradation, 61 patterns",
+      "is_active": false
+    },
+    {
+      "version_id": "v11_20260725_104422",
+      "version_name": "Retrained Model v11_20260725_104422",
+      "creation_timestamp": "2026-07-25T10:44:23.474929",
+      "model_files": {
+        "classifier": "knowledge_base\\models\\classifier_v11_20260725_104422.pkl",
+        "embedder": "knowledge_base\\models\\embedder_v11_20260725_104422.pkl",
+        "scaler": "knowledge_base\\models\\scaler_v11_20260725_104422.pkl"
+      },
+      "performance_metrics": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0,
+        "validation_samples": 12
+      },
+      "training_data_size": 59,
+      "description": "Triggered by performance_degradation, 59 patterns",
+      "is_active": false
+    }
+  ],
+  "metadata": {
+    "last_updated": "2026-07-25T12:09:12.010723",
+    "total_versions": 10,
+    "active_version": "v11_20260725_120911",
+    "last_training_timestamp": "2026-07-25T12:09:12.010669",
+    "last_kb_size": 65
+  }
+}

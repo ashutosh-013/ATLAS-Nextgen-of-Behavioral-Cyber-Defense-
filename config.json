@@ -1,0 +1,26 @@
+{
+  "embedding_dimensions": 128,
+  "similarity_threshold": 0.7,
+  "novelty_threshold": 0.8,
+  "confidence_threshold": 0.6,
+  "risk_thresholds": {
+    "critical": 0.85,
+    "high": 0.7,
+    "medium": 0.5,
+    "low": 0.3
+  },
+  "knowledge_base_path": "knowledge_base/",
+  "max_graph_size": 1000,
+  "batch_size": 20,
+  "max_memory_mb": 4096,
+  "query_timeout_ms": 100,
+  "processing_timeout_s": 30,
+  "log_level": "INFO",
+  "log_format": "json",
+  "log_file": "logs/badna.log",
+  "max_log_size_mb": 100,
+  "log_backup_count": 5,
+  "api_port": 8080,
+  "api_host": "localhost",
+  "rate_limit_requests_per_minute": 60
+}

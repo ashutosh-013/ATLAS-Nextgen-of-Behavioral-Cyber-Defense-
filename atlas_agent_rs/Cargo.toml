@@ -1,0 +1,21 @@
+[package]
+name = "atlas-agent-rs"
+version = "0.1.0"
+edition = "2021"
+description = "High-Performance Zero-Dependency Enterprise Kernel Telemetry Agent for ATLAS XDR"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+reqwest = { version = "0.11", features = ["json"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+[target.'cfg(windows)'.dependencies]
+# ETW bindings for kernel trace consumer
+windows = { version = "0.51", features = ["Win32_System_Diagnostics_Etw"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# eBPF bindings for Linux tracepoints
+aya = "0.11"
+aya-log = "0.1"

@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATLAS - Causal Behavioral Cyber Intelligence Platform</title>
+  <link rel="stylesheet" href="styles.css?v=2.5.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js for high-fidelity dashboards -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- TOP NAVIGATION BAR -->
+  <nav class="top-nav">
+    <div class="brand">
+      <div class="brand-icon">A</div>
+      <div class="brand-name">
+        <h1>ATLAS</h1>
+        <p>The Adaptive Threat Learning and Analysis System</p>
+      </div>
+    </div>
+    
+    <div class="nav-links">
+      <a href="#" class="nav-item active" data-tab="dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a href="#" class="nav-item" data-tab="threats"><i class="fa-solid fa-shield-virus"></i> Threats</a>
+      <a href="#" class="nav-item" data-tab="investigation"><i class="fa-solid fa-file-magnifying-glass"></i> Investigation</a>
+      <a href="#" class="nav-item" data-tab="kb"><i class="fa-solid fa-database"></i> Knowledge Base</a>
+      <a href="#" class="nav-item" data-tab="tpot"><i class="fa-solid fa-spider"></i> T-Pot Honeypot</a>
+      <a href="#" class="nav-item" data-tab="telemetry"><i class="fa-solid fa-terminal"></i> Telemetry</a>
+      <a href="#" class="nav-item" data-tab="campaigns"><i class="fa-solid fa-clock-rotate-left"></i> Campaigns</a>
+      <a href="#" class="nav-item" data-tab="playbooks"><i class="fa-solid fa-circle-play"></i> Playbooks</a>
+      <a href="#" class="nav-item" data-tab="analytics"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+      <a href="#" class="nav-item" data-tab="ai-report"><i class="fa-solid fa-brain"></i> AI Report</a>
+      <a href="#" class="nav-item" data-tab="settings"><i class="fa-solid fa-sliders"></i> Settings</a>
+    </div>
+
+    <div class="cctv-controls">
+      <div class="hud-status">
+        <div class="status-dot" id="cctv-status-dot"></div>
+        <span id="cctv-status-lbl">STANDBY</span>
+      </div>
+      <button id="replay-play" class="control-btn" title="Replay Attack Scenario"><i class="fa-solid fa-play"></i></button>
+      <button id="replay-pause" class="control-btn" title="Pause"><i class="fa-solid fa-pause"></i></button>
+      <button id="replay-stop" class="control-btn" title="Reset Replay"><i class="fa-solid fa-rotate-left"></i></button>
+    </div>
+  </nav>
+
+  <!-- CONTAINER MAIN WRAPPER -->
+  <div class="app-container">
+    
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+      <!-- Smart System Scan Action Button -->
+      <button id="btn-smart-scan" class="smart-scan-trigger-btn" onclick="openSmartScanModal()">
+        <i class="fa-solid fa-shield-halved"></i> SMART SYSTEM SCAN
+      </button>
+
+      <!-- System Status Widget -->
+      <div>
+        <div class="sidebar-section-title"><i class="fa-solid fa-server"></i> System Status</div>
+        <div class="status-widget">
+          <div class="status-row">
+            <span>ATLAS Core</span>
+            <span class="status-val text-green" id="lbl-status-core" style="color: var(--color-green);">ACTIVE</span>
+          </div>
+          <div class="status-row">
+            <span>Quantum Engine</span>
+            <span class="status-val text-green" id="lbl-status-quantum" style="color: var(--color-green);">ONLINE</span>
+          </div>
+          <div class="status-row">
+            <span>Knowledge Base</span>
+            <span class="status-val" id="lbl-status-kb">260 Profiles</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Threat Level Score Widget -->
+      <div>
+        <div class="sidebar-section-title"><i class="fa-solid fa-biohazard"></i> Unified Risk Score</div>
+        <div class="threat-score-gauge">
+          <svg class="gauge-svg">
+            <path class="gauge-track" d="M 20 80 A 55 55 0 0 1 120 80" />
+            <path class="gauge-fill" id="sidebar-gauge-fill" d="M 20 80 A 55 55 0 0 1 120 80" />
+          </svg>
+          <span class="gauge-value" id="lbl-gauge-score">12</span>
+          <span class="gauge-label" id="lbl-gauge-level" style="color: var(--color-green);">LOW</span>
+        </div>
+      </div>
+
+      <!-- Alerts Feed -->
+      <div>
+        <div class="sidebar-section-title"><i class="fa-solid fa-bell"></i> Critical Alerts</div>
+        <div class="alerts-list" id="sidebar-alerts-list">
+          <div class="alert-item">
+            <div class="alert-header">
+              <span>IOC Database loaded</span>
+              <span class="alert-time">Just Now</span>
+            </div>
+            <span class="alert-body">Ingested CISA KEV catalog threat records successfully.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent SOC feed events -->
+      <div>
+        <div class="sidebar-section-title"><i class="fa-solid fa-rectangle-list"></i> SOC Activity Feed</div>
+        <div class="soc-feed-container" id="sidebar-soc-feed">
+          <div class="feed-item">
+            <div class="feed-header info">
+              <span>SYSTEM INITIALIZATION</span>
+              <span>10:00:00</span>
+            </div>
+            <span class="feed-details">Orchestrator active. Awaiting network telemetry logs...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scan Target Device Widget -->
+      <div id="sidebar-device-info" style="margin-top: 1.25rem;">
+        <div class="sidebar-section-title" id="lbl-sidebar-device-title"><i class="fa-solid fa-laptop"></i> Protected Endpoint</div>
+        <div class="status-widget">
+          <div class="status-row">
+            <span>Owner Name</span>
+            <span class="status-val text-green" id="lbl-device-owner" style="color: var(--color-green);">-</span>
+          </div>
+          <div class="status-row">
+            <span>Device IP</span>
+            <span class="status-val text-green" id="lbl-device-ip" style="color: var(--color-green);">-</span>
+          </div>
+          <div class="status-row">
+            <span>System Brand</span>
+            <span class="status-val text-green" id="lbl-device-brand" style="color: var(--color-green);">-</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENT DISPLAY WORKSPACE -->
+    <main class="main-workspace">
+      
+      <!-- TAB: DASHBOARD -->
+      <div class="tab-content active" id="tab-dashboard">
+        
+        <!-- 1. Executive Summary Overview Grid -->
+        <div class="exec-overview-grid">
+          <div class="overview-card">
+            <div class="overview-icon red"><i class="fa-solid fa-skull-crossbones"></i></div>
+            <div class="overview-data">
+              <span class="overview-val" id="card-active-threats">0</span>
+              <span class="overview-lbl">Active Threats</span>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-icon green"><i class="fa-solid fa-desktop"></i></div>
+            <div class="overview-data">
+              <span class="overview-val" id="card-endpoints">1</span>
+              <span class="overview-lbl">Connected Endpoints</span>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-icon orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="overview-data">
+              <span class="overview-val" id="card-risk-devices">0</span>
+              <span class="overview-lbl">High Risk Devices</span>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-icon blue"><i class="fa-solid fa-shield-virus"></i></div>
+            <div class="overview-data">
+              <span class="overview-val" id="card-ioc-matches">0</span>
+              <span class="overview-lbl">IOC Matches Today</span>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-icon purple"><i class="fa-solid fa-dna"></i></div>
+            <div class="overview-data">
+              <span class="overview-val" id="card-dna-created">260</span>
+              <span class="overview-lbl">Behavior Profiles</span>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-icon cyan"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="overview-data">
+              <span class="overview-val" id="card-detection-confidence">Not Calibrated</span>
+              <span class="overview-lbl">Detection Confidence</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- VISUAL SECTION 1: ATLAS SYSTEM SOFTWARE HEALTH -->
+        <div style="margin: 1.25rem 0 0.75rem 0; display:flex; align-items:center; gap:0.6rem; border-bottom:1px solid var(--border-color); padding-bottom:0.4rem;">
+          <span style="font-family:'Outfit', sans-serif; font-size:0.85rem; font-weight:800; color:var(--color-blue); text-transform:uppercase; letter-spacing:0.5px;"><i class="fa-solid fa-server"></i> ATLAS SYSTEM SOFTWARE HEALTH</span>
+          <span style="font-size:0.72rem; color:var(--text-muted);">— Operational telemetry stream, pipeline throughput & engine health</span>
+        </div>
+
+        <!-- Real-Time Event Streaming Pipeline Map -->
+        <div class="card" style="background-color:rgba(0,0,0,0.15); padding:1rem;">
+          <div class="card-title" style="font-size:0.9rem; margin-bottom:0.75rem;"><i class="fa-solid fa-network-wired"></i> Live Telemetry Streaming Pipeline</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; text-align:center; font-size:0.75rem;">
+            <div style="flex:1; min-width:110px; padding:0.5rem; border:1px solid rgba(255,255,255,0.05); border-radius:6px; background:rgba(0,0,0,0.2);">
+              <div style="color:var(--color-blue); font-weight:700;"><i class="fa-solid fa-desktop"></i> Endpoint Agent</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">Sysmon/ETW Logs</div>
+            </div>
+            <div style="color:var(--text-muted); font-size:1.1rem;"><i class="fa-solid fa-circle-arrow-right"></i></div>
+            <div style="flex:1; min-width:110px; padding:0.5rem; border:1px solid rgba(255,255,255,0.05); border-radius:6px; background:rgba(0,0,0,0.2);">
+              <div style="color:var(--color-cyan); font-weight:700;"><i class="fa-solid fa-cloud-arrow-down"></i> Log Collector</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">Ingestion Listener</div>
+            </div>
+            <div style="color:var(--text-muted); font-size:1.1rem;"><i class="fa-solid fa-circle-arrow-right"></i></div>
+            <div style="flex:1; min-width:110px; padding:0.5rem; border:1px solid rgba(255,255,255,0.05); border-radius:6px; background:rgba(0,0,0,0.2);">
+              <div style="color:var(--color-purple); font-weight:700;"><i class="fa-solid fa-database"></i> Redis Queue</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">Streaming Event Broker</div>
+            </div>
+            <div style="color:var(--text-muted); font-size:1.1rem;"><i class="fa-solid fa-circle-arrow-right"></i></div>
+            <div style="flex:1; min-width:110px; padding:0.5rem; border:1px solid rgba(255,255,255,0.05); border-radius:6px; background:rgba(0,0,0,0.2);">
+              <div style="color:var(--color-orange); font-weight:700;"><i class="fa-solid fa-brain"></i> ATLAS AI Core</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">d-BEF Projection</div>
+            </div>
+            <div style="color:var(--text-muted); font-size:1.1rem;"><i class="fa-solid fa-circle-arrow-right"></i></div>
+            <div style="flex:1; min-width:110px; padding:0.5rem; border:1px solid rgba(255,255,255,0.05); border-radius:6px; background:rgba(0,0,0,0.2);">
+              <div style="color:var(--color-green); font-weight:700;"><i class="fa-solid fa-gavel"></i> Decision Engine</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">Auto-Mitigation</div>
+            </div>
+            <div style="color:var(--text-muted); font-size:1.1rem;"><i class="fa-solid fa-circle-arrow-right"></i></div>
+            <div style="flex:1; min-width:110px; padding:0.5rem; border:1px solid rgba(56,189,248,0.05); border-radius:6px; background:rgba(56,189,248,0.05); border-color:rgba(56,189,248,0.2);">
+              <div style="color:var(--text-primary); font-weight:700;"><i class="fa-solid fa-chart-line"></i> Dashboard</div>
+              <div style="font-size:0.65rem; color:var(--color-blue); margin-top:2px; font-weight:bold;">LIVE WEBSOCKET</div>
+            </div>
+          </div>
+          <!-- Operational Health Metrics -->
+          <div style="margin-top:0.75rem; padding-top:0.6rem; border-top:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-around; font-size:0.72rem; color:var(--text-secondary);">
+            <span>Pipeline Health: <strong style="color:var(--color-green);">HEALTHY</strong></span>
+            <span style="color:var(--border-color);">|</span>
+            <span>Event Rate: <strong id="pipe-event-rate" style="color:var(--color-blue);">42 events/sec</strong></span>
+            <span style="color:var(--border-color);">|</span>
+            <span>Latency: <strong id="pipe-latency" style="color:var(--color-cyan);">1.25 ms</strong></span>
+            <span style="color:var(--border-color);">|</span>
+            <span>Dropped Events: <strong style="color:var(--text-muted);">0</strong></span>
+          </div>
+        </div>
+
+        <!-- VISUAL SECTION 2: SECURITY THREAT POSTURE & ANALYSIS -->
+        <div style="margin: 1.5rem 0 0.75rem 0; display:flex; align-items:center; gap:0.6rem; border-bottom:1px solid var(--border-color); padding-bottom:0.4rem;">
+          <span style="font-family:'Outfit', sans-serif; font-size:0.85rem; font-weight:800; color:var(--color-red); text-transform:uppercase; letter-spacing:0.5px;"><i class="fa-solid fa-shield-virus"></i> SECURITY THREAT POSTURE & ANALYSIS</span>
+          <span style="font-size:0.72rem; color:var(--text-muted);">— Endpoint risk posture, causal timeline, behavioral anomaly memory & predictive AI models</span>
+        </div>
+
+        <!-- 2. Threat Gauge & Live Timeline Split -->
+        <div class="threat-and-timeline-grid">
+          <div class="card gauge-card">
+            <div class="card-title"><i class="fa-solid fa-gauge-high"></i> Threat Posture</div>
+            <div class="threat-level-circle low" id="dashboard-threat-circle">
+              <span class="level-lbl low" id="dash-threat-lbl">LOW</span>
+              <span class="circle-sub">Posture Status</span>
+            </div>
+            <div id="dash-posture-explanation" style="font-weight:700; color:var(--color-green); font-size:0.75rem; text-align:center; margin-top:0.4rem;">
+              LOW RISK — No active attack chain detected
+            </div>
+            <div style="margin-top:0.6rem; font-size:0.72rem; color:var(--text-secondary); text-align:center; display:flex; flex-direction:column; gap:0.2rem; background:rgba(0,0,0,0.2); padding:0.45rem 0.6rem; border-radius:8px; border:1px solid var(--border-color);">
+              <div>System Posture Risk Score: <strong id="lbl-posture-risk" style="color:var(--color-blue);">8/100</strong></div>
+              <div>Confidence: <strong id="lbl-posture-conf" style="color:var(--color-green);">Not Calibrated</strong></div>
+              <div>Active Incidents: <strong id="lbl-posture-incidents">0</strong></div>
+              <div>Updated: <strong id="lbl-posture-updated" style="color:var(--text-muted);">Just now</strong></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title" id="lbl-timeline-header"><i class="fa-solid fa-route"></i> Live Activity Timeline</div>
+            <div class="timeline-list" id="dashboard-attack-timeline">
+              <div class="timeline-node active">
+                <div class="timeline-dot">1</div>
+                <span class="timeline-text">Login</span>
+              </div>
+              <div class="timeline-node">
+                <div class="timeline-dot">2</div>
+                <span class="timeline-text">PowerShell</span>
+              </div>
+              <div class="timeline-node">
+                <div class="timeline-dot">3</div>
+                <span class="timeline-text">Registry</span>
+              </div>
+              <div class="timeline-node">
+                <div class="timeline-dot">4</div>
+                <span class="timeline-text">Network</span>
+              </div>
+              <div class="timeline-node">
+                <div class="timeline-dot">5</div>
+                <span class="timeline-text">C2 Socket</span>
+              </div>
+              <div class="timeline-node">
+                <div class="timeline-dot">6</div>
+                <span class="timeline-text">Ransomware</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Anomaly Memory & Detection Engine Health & Predictions -->
+        <div class="threats-dashboard-grid" style="grid-template-columns: 1fr 1fr 1fr; gap:1.5rem;">
+          <!-- Column 1: Behavior Memory Engine -->
+          <div class="card" style="background-color:rgba(0,0,0,0.15); padding:1rem 1.25rem;">
+            <div class="card-title" style="font-size:0.9rem;"><i class="fa-solid fa-clock-rotate-left"></i> Behavior Memory Engine</div>
+            <p class="text-secondary" style="font-size:0.72rem; margin-bottom:0.6rem;">Monitors user-process sequence transitions against baseline memory.</p>
+            <div style="display:flex; flex-direction:column; gap:0.4rem; font-size:0.75rem;">
+              <div style="border-left: 2px solid var(--color-green); padding-left: 0.5rem; background:rgba(74,222,128,0.02);">
+                <div style="font-weight:700; color:var(--color-green); font-size:0.65rem;">CURRENT BASELINE</div>
+                <div id="mem-baseline-path" style="color:var(--text-secondary); font-size:0.68rem;">Normal browser ➔ DNS ➔ HTTPS pattern</div>
+              </div>
+              <div id="mem-observed-box" style="border-left: 2px solid var(--color-blue); padding-left: 0.5rem; background:rgba(56,189,248,0.02); margin-top:0.3rem;">
+                <div style="font-weight:700; color:var(--color-blue); font-size:0.65rem;" id="mem-observed-label">OBSERVED DEVIATION</div>
+                <div id="mem-observed-path" style="color:var(--text-secondary); font-size:0.68rem; word-break:break-all;">None — Active execution follows verified baseline trajectory</div>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px; font-size:0.68rem;">
+                <span>Memory Confidence:</span>
+                <strong id="mem-confidence-val" style="color:var(--color-blue);">92%</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.68rem;">
+                <span>Similar Historical Behaviors:</span>
+                <strong id="mem-similar-cnt" style="color:var(--color-purple);">3 matches</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 2: Threat Prediction Flow -->
+          <div class="card" style="background-color:rgba(0,0,0,0.15); padding:1rem 1.25rem;">
+            <div class="card-title" style="font-size:0.9rem;"><i class="fa-solid fa-arrow-trend-up"></i> AI Threat Predictor</div>
+            <p class="text-secondary" style="font-size:0.72rem; margin-bottom:0.6rem;">Likely next stage in execution chain (Predictive model).</p>
+            <div style="display:flex; flex-direction:column; gap:0.35rem; font-size:0.75rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span>Observed Stage:</span>
+                <span class="pill-badge info" id="prediction-current-state" style="font-size:0.6rem;">Initial Access</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+                <span>Likely Next Stage:</span>
+                <span class="pill-badge warning" id="prediction-next-state" style="font-size:0.6rem; font-weight:bold;">Execution / Persistence</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.68rem; color:var(--text-secondary); margin-top:4px;">
+                <span>Predictive Probability:</span> <strong id="prediction-prob" style="color:var(--color-blue);">72%</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.68rem; color:var(--text-secondary);">
+                <span>Evidence Correlated:</span> <strong id="prediction-evidence-cnt">4 correlated behaviors</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 3: Multi-Engine Detection Suite -->
+          <div class="card" style="background-color:rgba(0,0,0,0.15); padding:1rem 1.25rem;">
+            <div class="card-title" style="font-size:0.9rem;"><i class="fa-solid fa-heart-pulse"></i> Detection Engine Health</div>
+            <div style="background:rgba(74,222,128,0.08); border:1px solid rgba(74,222,128,0.2); border-radius:6px; padding:0.35rem 0.5rem; font-size:0.7rem; font-weight:700; color:var(--color-green); display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+              <span><i class="fa-solid fa-circle-check"></i> ALL ENGINES OPERATIONAL</span>
+              <span style="font-size:0.65rem; color:var(--text-muted); font-weight:normal;">Last check: <strong id="engine-last-check" style="color:var(--text-secondary);">2s ago</strong></span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.25rem; font-size:0.7rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:1px;">
+                <span>IOC Detection Engine:</span> <span style="color:var(--color-green); font-weight:700;" id="det-engine-ioc"><i class="fa-solid fa-check"></i> ACTIVE</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:1px;">
+                <span>Behavioral LOLBins Engine:</span> <span style="color:var(--color-green); font-weight:700;" id="det-engine-beh"><i class="fa-solid fa-check"></i> ACTIVE</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:1px;">
+                <span>ML Telemetry Classifier:</span> <span style="color:var(--color-green); font-weight:700;" id="det-engine-ml"><i class="fa-solid fa-check"></i> ACTIVE</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:1px;">
+                <span>Behavioral DNA Engine:</span> <span style="color:var(--color-green); font-weight:700;" id="det-engine-graph"><i class="fa-solid fa-check"></i> ACTIVE</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:1px;">
+                <span>Causal Reasoning Engine:</span> <span style="color:var(--color-green); font-weight:700;" id="det-engine-causal"><i class="fa-solid fa-check"></i> ACTIVE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Behavior Graph centerpiece & Threat Intel Panel -->
+        <div class="centerpiece-explorer-grid">
+          <div class="card">
+            <div class="card-title-bar">
+              <div class="card-title"><i class="fa-solid fa-diagram-project"></i> Behavior Graph Explorer (Causal Dependency Map)</div>
+              <div class="pill-badge info">Interactive</div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem; gap: 0.5rem; flex-wrap: wrap; background: rgba(0,0,0,0.15); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color);">
+              <div style="display:flex; gap: 0.4rem; align-items:center;">
+                <input type="text" id="graph-node-search" placeholder="Search node label..." style="background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-primary); font-size:0.75rem; padding:0.25rem 0.5rem; border-radius:4px; width: 130px; outline: none;">
+                <input type="text" id="graph-bql-query" placeholder="BQL: GET process WHERE name = ..." style="background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-primary); font-size:0.75rem; padding:0.25rem 0.5rem; border-radius:4px; width: 220px; outline: none; font-family:'Fira Code', monospace;">
+                <button id="btn-graph-bql-submit" class="pill-badge info" style="border:none; cursor:pointer; font-weight:700; height: 24px; display: flex; align-items: center; justify-content: center; background: var(--color-blue);">BQL Hunt</button>
+              </div>
+              <div style="display:flex; gap:0.25rem; align-items:center;">
+                <button id="btn-graph-focus-suspicious" class="pill-badge warning" style="border:none; cursor:pointer; font-size:0.7rem; font-weight:700;" title="Focus Suspicious Path"><i class="fa-solid fa-bullseye"></i> Focus Suspicious Path</button>
+                <button id="btn-graph-zoom-in" style="background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-primary); padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.75rem;" title="Zoom In"><i class="fa-solid fa-plus"></i></button>
+                <button id="btn-graph-zoom-out" style="background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-primary); padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.75rem;" title="Zoom Out"><i class="fa-solid fa-minus"></i></button>
+                <button id="btn-graph-reset" style="background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-primary); padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.7rem; font-weight: 700;">RESET VIEW</button>
+              </div>
+            </div>
+            <div class="graph-canvas-container">
+              <canvas id="behavior-graph-canvas" class="behavior-canvas"></canvas>
+              <div class="floating-node-info" id="node-info-popup" style="width: 250px; font-size: 0.72rem; max-height: 320px; overflow-y: auto;">
+                <div class="info-title" id="lbl-info-title">Process node</div>
+                <p style="margin-bottom: 2px;">Name: <span id="lbl-info-name" style="font-weight:700;">--</span></p>
+                <p style="margin-bottom: 2px;">Timestamp: <span id="lbl-info-time" style="font-family:monospace;">--</span></p>
+                <p style="margin-bottom: 2px;">Confidence: <span id="lbl-info-confidence" style="font-weight:700; color:var(--color-green);">--</span></p>
+                <p style="margin-bottom: 2px;">Process Hash: <span id="lbl-info-hash" style="font-family:monospace; color:var(--text-secondary);">--</span></p>
+                <p style="margin-bottom: 2px;">User Account: <span id="lbl-info-user" style="font-weight:600;">--</span></p>
+                <p style="margin-bottom: 2px;">MITRE Technique: <span id="lbl-info-mitre" style="color:var(--color-cyan);">--</span></p>
+                <p style="margin-bottom: 2px;">Parent PID: <span id="lbl-info-parent" style="font-family:monospace;">--</span></p>
+                <p style="margin-bottom: 2px;">Child PIDs: <span id="lbl-info-child" style="font-family:monospace;">--</span></p>
+                <p style="margin-bottom: 2px;">Entropy: <span id="lbl-info-entropy">--</span></p>
+                <p style="margin-bottom: 2px;">Reputation: <span id="lbl-info-reputation">--</span></p>
+                <p>Causal Risk: <span id="lbl-info-risk" style="color:var(--color-orange); font-weight:700;">--</span></p>
+                <p style="margin-top: 4px; font-size: 0.65rem; color: var(--text-secondary);" id="lbl-info-desc">Details of system event...</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><i class="fa-solid fa-globe"></i> Global Threat Feeds</div>
+            <p class="text-secondary" style="font-size:0.72rem; margin-bottom:0.75rem;">Global Intelligence Connectors | Local Detections: <strong style="color:var(--color-green);">0</strong></p>
+            <div class="intel-panel-list">
+              <div class="intel-feed-card">
+                <div class="intel-feed-meta">
+                  <i class="fa-solid fa-cube"></i>
+                  <span class="intel-feed-name">MalwareBazaar Hashes</span>
+                </div>
+                <span class="intel-feed-value" id="intel-count-mb">▲ 732 new hashes · Updated 4 min ago</span>
+              </div>
+              <div class="intel-feed-card">
+                <div class="intel-feed-meta">
+                  <i class="fa-solid fa-link"></i>
+                  <span class="intel-feed-name">URLhaus Payloads</span>
+                </div>
+                <span class="intel-feed-value" id="intel-count-uh">▲ 34 new URLs · Updated 7 min ago</span>
+              </div>
+              <div class="intel-feed-card">
+                <div class="intel-feed-meta">
+                  <i class="fa-solid fa-crosshairs"></i>
+                  <span class="intel-feed-name">MITRE ATT&CK Framework</span>
+                </div>
+                <span class="intel-feed-value" id="intel-count-mitre" style="color:var(--color-blue);">243 techniques · Synced today</span>
+              </div>
+              <div class="intel-feed-card">
+                <div class="intel-feed-meta">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span class="intel-feed-name">CISA KEV Vulnerabilities</span>
+                </div>
+                <span class="intel-feed-value" id="intel-count-cisa" style="color:var(--color-orange);">1,382 CVEs · Synced today</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB: THREATS (IOC DASHBOARD) -->
+      <div class="tab-content" id="tab-threats">
+
+        <div style="margin-bottom: 0.75rem;" id="container-threat-back-kb">
+          <button id="btn-threat-back-kb" class="btn" style="display:none; font-size:0.75rem; padding:0.35rem 0.75rem; background:rgba(59,130,246,0.2); border:1px solid var(--color-blue); color:var(--color-blue); border-radius:4px;"><i class="fa-solid fa-arrow-left"></i> Back to Knowledge Base (<span id="lbl-threat-back-kb-id">PAT-00421</span>)</button>
+        </div>
+
+        <!-- 1. Central Authoritative Threat Summary Bar -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+          <div class="overview-card" style="background:rgba(0,0,0,0.2); padding:0.8rem 1rem;">
+            <div class="overview-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="overview-data">
+              <span class="overview-val" id="card-threats-active">0</span>
+              <span class="overview-lbl">Active Threats</span>
+            </div>
+          </div>
+          <div class="overview-card" style="background:rgba(0,0,0,0.2); padding:0.8rem 1rem;">
+            <div class="overview-icon blue"><i class="fa-solid fa-satellite-dish"></i></div>
+            <div class="overview-data">
+              <span class="overview-val" id="card-threats-intel-hits">0</span>
+              <span class="overview-lbl">Intelligence Matches</span>
+            </div>
+          </div>
+          <div class="overview-card" style="background:rgba(0,0,0,0.2); padding:0.8rem 1rem;">
+            <div class="overview-icon orange"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="overview-data">
+              <span class="overview-val" id="card-threats-severity" style="font-size:1.1rem; font-weight:800;">NONE</span>
+              <span class="overview-lbl">Highest Severity</span>
+            </div>
+          </div>
+          <div class="overview-card" style="background:rgba(0,0,0,0.2); padding:0.8rem 1rem;">
+            <div class="overview-icon green"><i class="fa-solid fa-heart-pulse"></i></div>
+            <div class="overview-data">
+              <span class="overview-val" id="card-threats-status-badge" style="font-size:0.95rem; font-weight:800; color:var(--color-green);">PROTECTED</span>
+              <span class="overview-lbl">Authoritative Posture</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="threats-dashboard-grid">
+          <!-- Ingested IOC Distribution Panel -->
+          <div class="card">
+            <div class="card-title"><i class="fa-solid fa-chart-pie"></i> Ingested IOC Distribution</div>
+            <div id="ioc-distribution-container" style="margin-top:0.75rem;">
+              <div style="font-size:0.75rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:0.4rem;" id="ioc-dist-list">
+                <div style="display:flex; justify-content:space-between;"><span>IP Addresses:</span> <strong id="ioc-cnt-ip">0</strong></div>
+                <div style="display:flex; justify-content:space-between;"><span>Domains:</span> <strong id="ioc-cnt-domain">0</strong></div>
+                <div style="display:flex; justify-content:space-between;"><span>URLs:</span> <strong id="ioc-cnt-url">0</strong></div>
+                <div style="display:flex; justify-content:space-between;"><span>File Hashes:</span> <strong id="ioc-cnt-hash">0</strong></div>
+                <div style="display:flex; justify-content:space-between;"><span>Emails:</span> <strong id="ioc-cnt-email">0</strong></div>
+                <div style="display:flex; justify-content:space-between;"><span>Other Indicators:</span> <strong id="ioc-cnt-other">0</strong></div>
+              </div>
+              <div id="ioc-empty-notice" style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding:1rem 0; margin-top:0.5rem; border-top:1px solid rgba(255,255,255,0.05);">
+                No IOC matches detected
+              </div>
+            </div>
+          </div>
+
+          <!-- Latest Threat Matches Table -->
+          <div class="card" style="grid-column: span 2;">
+            <div class="card-title"><i class="fa-solid fa-magnifying-glass"></i> Threat Signatures (Latest Matches)</div>
+            <div style="margin-top: 0.75rem; overflow-x: auto;">
+              <table class="ioc-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>IOC Type</th>
+                    <th>Value</th>
+                    <th>Lifecycle Status</th>
+                    <th>Source Provenance</th>
+                    <th>Confidence</th>
+                  </tr>
+                </thead>
+                <tbody id="ioc-matches-tbody">
+                  <tr>
+                    <td colspan="6" class="text-muted" style="text-align: center;">No active matches found. System is protected.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Threat Intelligence Enrichment Card -->
+        <div class="card" style="margin-top: 1.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <div class="card-title"><i class="fa-solid fa-square-rss"></i> Threat Intelligence Enrichment</div>
+              <p class="text-secondary" style="font-size:0.78rem; margin-top:0.25rem;">Enriches incoming indicators automatically against commercial and public reputation directories.</p>
+            </div>
+            <div id="lbl-enrich-lifecycle-badge" class="pill-badge success" style="font-size:0.75rem; font-weight:700;">
+              SYSTEM PROTECTED
+            </div>
+          </div>
+
+          <div style="background-color:rgba(16,24,48,0.3); padding:1.25rem; border-radius:12px; border:1px solid var(--border-color); font-size:0.8rem; display:flex; flex-direction:column; gap:0.75rem; margin-top:1rem;" id="ti-enrichment-panel">
+            
+            <!-- Target & Summary Header -->
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:8px; flex-wrap:wrap; gap:0.5rem;">
+              <div>
+                <span style="font-weight:700; color:var(--color-blue); font-size:0.8rem; text-transform:uppercase;">IOC TARGET UNDER EVALUATION:</span>
+                <span style="font-family:'Fira Code', monospace; font-weight:700; color:var(--text-primary); margin-left:0.4rem; font-size:0.9rem;" id="lbl-enrich-target">None</span>
+              </div>
+              <div style="font-size:0.72rem; color:var(--text-secondary);">
+                First Seen: <strong id="lbl-enrich-firstseen">--</strong> | Last Seen: <strong id="lbl-enrich-lastseen">--</strong> | Occurrences: <strong id="lbl-enrich-occurrences">0</strong>
+              </div>
+            </div>
+
+            <!-- Empty Notice when No IOC is Selected -->
+            <div id="enrich-empty-notice" style="font-size:0.78rem; color:var(--text-muted); padding:1rem 0; text-align:center;">
+              <i class="fa-solid fa-circle-info"></i> No IOC currently selected for enrichment. Select a scenario or click a threat match above.
+            </div>
+
+            <!-- Severity / Risk / Confidence Grid -->
+            <div id="enrich-metrics-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; background:rgba(0,0,0,0.2); padding:0.75rem; border-radius:8px; border:1px solid rgba(255,255,255,0.04);">
+              <div>
+                <div style="color:var(--text-muted); font-size:0.68rem; text-transform:uppercase; font-weight:600;">Severity</div>
+                <div style="font-weight:700; color:var(--color-green); font-size:0.95rem; margin-top:2px;" id="lbl-enrich-severity">NONE</div>
+              </div>
+              <div>
+                <div style="color:var(--text-muted); font-size:0.68rem; text-transform:uppercase; font-weight:600;">IOC Risk Score</div>
+                <div style="font-weight:700; color:var(--color-blue); font-size:0.95rem; margin-top:2px;" id="lbl-enrich-risk">0 / 100</div>
+              </div>
+              <div>
+                <div style="color:var(--text-muted); font-size:0.68rem; text-transform:uppercase; font-weight:600;">ATLAS Confidence</div>
+                <div style="font-weight:700; color:var(--color-green); font-size:0.95rem; margin-top:2px;" id="lbl-enrich-confidence">Not Calibrated</div>
+              </div>
+              <div>
+                <div style="color:var(--text-muted); font-size:0.68rem; text-transform:uppercase; font-weight:600;">Assessment Classification</div>
+                <div style="font-weight:700; color:var(--color-green); font-size:0.9rem; margin-top:2px;" id="lbl-enrich-assessment">System Protected</div>
+              </div>
+            </div>
+
+            <!-- Intelligence Sources Provenance (Visible only when IOC exists) -->
+            <div id="enrich-provider-grid" style="border-top:1px solid rgba(255,255,255,0.05); padding-top:0.6rem; display:none;">
+              <div style="font-weight:700; color:var(--text-primary); font-size:0.75rem; margin-bottom:0.4rem;"><i class="fa-solid fa-satellite-dish"></i> Intelligence Source Provenance & Audit</div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:0.75rem;">
+                <div style="background:rgba(0,0,0,0.25); padding:0.5rem 0.75rem; border-radius:6px; border:1px solid rgba(255,255,255,0.04);">
+                  <div style="color:var(--text-muted); font-size:0.68rem; font-weight:600;">ABUSEIPDB REPUTATION</div>
+                  <div style="font-weight:700; color:var(--text-primary); font-size:0.82rem; margin-top:2px;" id="lbl-enrich-abuse">0/100 (Clean)</div>
+                  <div style="font-size:0.65rem; color:var(--text-muted);" id="lbl-enrich-abuse-time">Checked: Just now</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.25); padding:0.5rem 0.75rem; border-radius:6px; border:1px solid rgba(255,255,255,0.04);">
+                  <div style="color:var(--text-muted); font-size:0.68rem; font-weight:600;">VIRUSTOTAL ENGINES</div>
+                  <div style="font-weight:700; color:var(--text-primary); font-size:0.82rem; margin-top:2px;" id="lbl-enrich-vt">0 / 74 Engines Flagged</div>
+                  <div style="font-size:0.65rem; color:var(--text-muted);" id="lbl-enrich-vt-time">Checked: Just now</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.25); padding:0.5rem 0.75rem; border-radius:6px; border:1px solid rgba(255,255,255,0.04);">
+                  <div style="color:var(--text-muted); font-size:0.68rem; font-weight:600;">GREYNOISE SCANNER CONTEXT</div>
+                  <div style="font-weight:700; color:var(--text-primary); font-size:0.82rem; margin-top:2px;" id="lbl-enrich-greynoise">Not Flagged</div>
+                  <div style="font-size:0.65rem; color:var(--text-muted);" id="lbl-enrich-greynoise-time">Checked: Just now</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Geolocation & Actor Attribution -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.6rem;">
+              <div>
+                <div style="color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; font-weight:600;">Network Operator (ASN)</div>
+                <div style="font-weight:600; margin-top:2px;" id="lbl-enrich-asn">Local / Unassigned</div>
+              </div>
+              <div>
+                <div style="color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; font-weight:600;">Registered Infrastructure Region</div>
+                <div style="font-weight:600; margin-top:2px;" id="lbl-enrich-geo">Internal Network</div>
+                <div style="font-size:0.65rem; color:var(--text-muted);">Registered metadata (does not imply physical location)</div>
+              </div>
+              <div>
+                <div style="color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; font-weight:600;">Reported Threat Actor Association</div>
+                <div style="font-weight:700; color:var(--text-primary); font-size:0.85rem; margin-top:2px;" id="lbl-enrich-campaign">Unknown / None Reported</div>
+              </div>
+            </div>
+
+            <!-- Why ATLAS Flagged This Evidence Checklist -->
+            <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:0.6rem;">
+              <div style="font-weight:700; color:var(--color-blue); font-size:0.78rem; margin-bottom:0.3rem;"><i class="fa-solid fa-list-check"></i> Why ATLAS Flagged This:</div>
+              <ul style="font-size:0.75rem; color:var(--text-secondary); margin-left:1.2rem; line-height:1.5;" id="lbl-enrich-why-list">
+                <li>No active malicious indicators or anomalous telemetry detected.</li>
+              </ul>
+            </div>
+
+            <!-- Response Recommendation & Dynamic Context-Driven Actions -->
+            <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:0.6rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
+              <div style="flex:1; min-width:250px;">
+                <span style="font-weight:700; color:var(--color-cyan);"><i class="fa-solid fa-gavel"></i> Response Recommendation:</span>
+                <div id="lbl-enrich-recommendation" style="color:var(--text-secondary); font-size:0.78rem; margin-top:2px;">No containment action required. System is protected under baseline policy.</div>
+              </div>
+              <div id="enrich-actions-container" style="display:flex; gap:0.5rem; align-items:center;">
+                <span class="text-muted" style="font-size:0.75rem;"><i class="fa-solid fa-circle-check" style="color:var(--color-green);"></i> No response action required</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 4. Threat Evidence & Reasoning Panel -->
+        <div class="card" style="margin-top: 1.5rem;" id="card-threat-evidence-reasoning">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <div class="card-title"><i class="fa-solid fa-microscope"></i> Threat Evidence & Reasoning</div>
+              <p class="text-secondary" style="font-size:0.78rem; margin-top:0.25rem;">Explainable evidence breakdown answering detection rationale, causal provenance, and response justification.</p>
+            </div>
+            <div id="lbl-evidence-status-pill" class="pill-badge success" style="font-size:0.75rem; font-weight:700;">
+              NO THREAT DETECTED
+            </div>
+          </div>
+
+          <!-- Minimal Clean Fallback Notice when No Threat Exists -->
+          <div id="threat-evidence-empty-box" style="font-size:0.78rem; color:var(--text-muted); padding:1rem; text-align:center; background:rgba(0,0,0,0.15); border-radius:8px; margin-top:1rem; border:1px solid rgba(255,255,255,0.04);">
+            <i class="fa-solid fa-shield-check" style="color:var(--color-green); margin-right:0.4rem;"></i> No threat evidence available — no suspicious indicator or anomalous event detected.
+          </div>
+
+          <!-- Detailed 5-Question Evidence Box (Visible when Threat Exists) -->
+          <div id="threat-evidence-details-box" style="display:none; background-color:rgba(16,24,48,0.3); padding:1.25rem; border-radius:12px; border:1px solid var(--border-color); font-size:0.8rem; flex-direction:column; gap:0.9rem; margin-top:1rem;">
+            
+            <!-- Question 1: What was detected? -->
+            <div style="border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:0.6rem;">
+              <div style="font-weight:700; color:var(--color-blue); font-size:0.78rem; text-transform:uppercase;"><i class="fa-solid fa-circle-info"></i> 1. What Was Detected?</div>
+              <div id="ev-q1-what" style="color:var(--text-primary); font-size:0.85rem; font-weight:600; margin-top:0.3rem;">--</div>
+              <div id="ev-q1-causal-chain" style="font-family:'Fira Code', monospace; font-size:0.75rem; color:var(--color-cyan); background:rgba(0,0,0,0.3); padding:0.4rem 0.6rem; border-radius:6px; margin-top:0.4rem; border:1px solid rgba(255,255,255,0.04);">--</div>
+            </div>
+
+            <!-- Question 2: Why does ATLAS believe it is dangerous? -->
+            <div style="border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:0.6rem;">
+              <div style="font-weight:700; color:var(--color-red); font-size:0.78rem; text-transform:uppercase;"><i class="fa-solid fa-triangle-exclamation"></i> 2. Why Does ATLAS Believe It Is Dangerous?</div>
+              <div id="ev-q2-why-dangerous" style="color:var(--text-secondary); font-size:0.8rem; margin-top:0.3rem; line-height:1.4;">--</div>
+            </div>
+
+            <!-- Question 3: What evidence supports the decision? -->
+            <div style="border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:0.6rem;">
+              <div style="font-weight:700; color:var(--color-purple); font-size:0.78rem; text-transform:uppercase;"><i class="fa-solid fa-list-check"></i> 3. What Evidence Supports The Decision?</div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:0.6rem; margin-top:0.4rem;" id="ev-q3-grid">
+                <!-- Process, IP, MITRE, Reputation cards dynamically populated -->
+              </div>
+            </div>
+
+            <!-- Question 4: What is the current status? -->
+            <div style="border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:0.6rem;">
+              <div style="font-weight:700; color:var(--color-orange); font-size:0.78rem; text-transform:uppercase;"><i class="fa-solid fa-clock-rotate-left"></i> 4. What Is The Current Status?</div>
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-top:0.3rem;">
+                <span id="ev-q4-status-text" style="font-weight:700; color:var(--text-primary); font-size:0.85rem;">--</span>
+                <span style="font-size:0.72rem; color:var(--text-secondary);">Supporting Events: <strong id="ev-q4-events-cnt" style="color:var(--color-blue);">0</strong> | Timestamp: <strong id="ev-q4-timestamp" style="color:var(--text-primary);">--</strong></span>
+              </div>
+            </div>
+
+            <!-- Question 5: What action should be taken? -->
+            <div>
+              <div style="font-weight:700; color:var(--color-green); font-size:0.78rem; text-transform:uppercase;"><i class="fa-solid fa-gavel"></i> 5. What Action Should Be Taken?</div>
+              <div id="ev-q5-action" style="color:var(--text-secondary); font-size:0.8rem; margin-top:0.3rem; line-height:1.4;">--</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: INVESTIGATION -->
+      <div class="tab-content" id="tab-investigation">
+        
+        <div style="margin-bottom: 0.75rem;" id="container-inv-back-kb">
+          <button id="btn-inv-back-kb" class="btn" style="display:none; font-size:0.75rem; padding:0.35rem 0.75rem; background:rgba(59,130,246,0.2); border:1px solid var(--color-blue); color:var(--color-blue); border-radius:4px;"><i class="fa-solid fa-arrow-left"></i> Back to Knowledge Base (<span id="lbl-inv-back-kb-id">PAT-00421</span>)</button>
+        </div>
+
+        <!-- Top Investigation Summary Bar -->
+        <div class="card" style="margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: rgba(16,24,48,0.4);">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+            <div style="display:flex; align-items:center; gap:0.8rem;">
+              <div style="background:rgba(56,189,248,0.1); border:1px solid var(--color-blue); padding:0.4rem 0.6rem; border-radius:6px; font-family:'Fira Code', monospace; font-weight:700; color:var(--color-blue); font-size:0.85rem;" id="inv-summary-id">
+                INV-2026-000101
+              </div>
+              <div>
+                <div style="font-weight:700; color:var(--text-primary); font-size:0.9rem;" id="inv-summary-title">Investigation Console</div>
+                <div style="font-size:0.72rem; color:var(--text-muted);">
+                  Target: <strong id="inv-summary-endpoint" style="color:var(--text-secondary);">WK-902 (192.168.1.105)</strong> | User: <strong id="inv-summary-user" style="color:var(--text-secondary);">SYSTEM</strong> | Time: <strong id="inv-summary-time" style="color:var(--text-secondary);">08:00:00 - 08:15:00</strong>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.6rem;">
+              <div style="text-align:right; font-size:0.72rem;">
+                <div style="color:var(--text-muted);">Risk Score: <strong id="inv-summary-risk" style="color:var(--color-blue);">8/100</strong></div>
+                <div style="color:var(--text-muted);">Confidence: <strong id="inv-summary-conf" style="color:var(--color-green);">Not calibrated</strong></div>
+              </div>
+              <div id="inv-summary-status-pill" class="pill-badge success" style="font-weight:700; font-size:0.8rem; padding:0.35rem 0.75rem;">
+                BENIGN BASELINE
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="investigation-panel-grid" style="grid-template-columns: 340px 1fr; gap: 1.25rem;">
+          
+          <!-- Left Column: Upgraded AI Investigator Reasoning & Validation Loop -->
+          <div class="card investigator-card" style="display:flex; flex-direction:column; gap:0.75rem;">
+            <div class="card-title"><i class="fa-solid fa-brain"></i> AI Investigator Reasoning</div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; background:rgba(0,0,0,0.2); padding:0.6rem; border-radius:8px; border:1px solid rgba(255,255,255,0.04); font-size:0.72rem;">
+              <div>
+                <span class="text-muted" style="display:block;">Threat Class</span>
+                <span id="lbl-ai-threat-type" class="pill-badge info" style="font-size:0.7rem; margin-top:2px;">BENIGN BASELINE</span>
+              </div>
+              <div>
+                <span class="text-muted" style="display:block;">Model Confidence</span>
+                <span id="lbl-ai-confidence" style="font-weight:700; color:var(--color-green); font-size:0.85rem; margin-top:2px;">Not calibrated</span>
+              </div>
+              <div>
+                <span class="text-muted" style="display:block;">Evidence Strength</span>
+                <span id="lbl-ai-evidence-strength" style="font-weight:600; color:var(--text-primary); margin-top:2px;">Zero Signals</span>
+              </div>
+              <div>
+                <span class="text-muted" style="display:block;">Observed MITRE</span>
+                <span id="lbl-ai-mitre-cnt" style="font-weight:700; color:var(--color-purple); font-size:0.85rem; margin-top:2px;">0 Techniques</span>
+              </div>
+            </div>
+
+            <!-- Supporting vs Contradicting Evidence Box -->
+            <div style="background:rgba(0,0,0,0.2); padding:0.65rem; border-radius:8px; border:1px solid rgba(255,255,255,0.04);">
+              <div style="font-weight:700; font-size:0.75rem; color:var(--color-blue); margin-bottom:0.4rem;"><i class="fa-solid fa-scale-balanced"></i> Supporting vs Contradicting Evidence</div>
+              <div id="inv-evidence-balanced-box" style="display:flex; flex-direction:column; gap:0.4rem; font-size:0.72rem;">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Structured AI Rationale -->
+            <div style="background:rgba(0,0,0,0.2); padding:0.65rem; border-radius:8px; border:1px solid rgba(255,255,255,0.04);">
+              <div style="font-weight:700; font-size:0.75rem; color:var(--color-cyan); margin-bottom:0.4rem;"><i class="fa-solid fa-comment-dots"></i> Structured Rationale</div>
+              <div id="lbl-ai-reasoning" style="font-size:0.75rem; color:var(--text-secondary); line-height:1.4;">
+                Current telemetry is consistent with expected baseline system behavior. No malicious indicators or anomalous execution pathways were detected.
+              </div>
+            </div>
+
+            <!-- Analyst Validation Inputs -->
+            <div style="border-top:1px solid var(--border-color); padding-top:0.6rem; margin-top:auto;" id="analyst-validation-loop-section">
+              <span class="text-secondary" style="font-size:0.78rem; font-weight:700; display:block; margin-bottom:0.4rem;"><i class="fa-solid fa-user-shield"></i> Analyst Validation Loop</span>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.4rem;">
+                <button class="control-btn" id="btn-loop-approve" style="background-color:rgba(34,197,94,0.05); border:1px solid var(--color-green); color:var(--color-green); font-size:0.72rem; padding:0.35rem; font-weight:700; cursor:pointer;"><i class="fa-solid fa-check"></i> Approve Finding</button>
+                <button class="control-btn" id="btn-loop-reject" style="background-color:rgba(239,68,68,0.05); border:1px solid var(--color-red); color:var(--color-red); font-size:0.72rem; padding:0.35rem; font-weight:700; cursor:pointer;"><i class="fa-solid fa-xmark"></i> Mark False Positive</button>
+              </div>
+              <textarea class="feedback-textarea" id="loop-analyst-comment" placeholder="Provide analyst comments or false positive reasons..." style="width:100%; height:45px; background-color:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:6px; color:var(--text-primary); font-size:0.72rem; padding:0.4rem; resize:none; font-family:inherit; margin-bottom:0.4rem;"></textarea>
+              <button class="btn-trigger-playbook" id="btn-loop-submit" style="width:100%; font-size:0.75rem; padding:0.4rem; text-align:center; display:block; margin:0; background:linear-gradient(135deg, var(--color-blue), var(--color-cyan)); box-shadow:0 2px 5px var(--color-blue-glow); cursor:pointer;">Commit Decision & Snapshot to Pipeline</button>
+              <div id="lbl-audit-feedback-status" style="font-size:0.65rem; color:var(--text-muted); text-align:center; margin-top:4px;">Audit trail active</div>
+            </div>
+          </div>
+
+          <!-- Right Column: Interactive Investigation Workspace -->
+          <div style="display:flex; flex-direction:column; gap:1.25rem;">
+            
+            <!-- 1. Interactive Causal / Attack Chain -->
+            <div class="card">
+              <div class="card-title-bar">
+                <div class="card-title"><i class="fa-solid fa-diagram-next"></i> Causal / Attack Chain</div>
+                <span class="text-secondary" style="font-size:0.72rem;">Click any node to inspect telemetry details.</span>
+              </div>
+              <div id="inv-attack-chain-container" style="margin-top:0.75rem; padding:1rem; background:rgba(0,0,0,0.2); border-radius:8px; border:1px solid rgba(255,255,255,0.04); display:flex; align-items:center; gap:0.75rem; overflow-x:auto; min-height:90px;">
+                <!-- Attack chain nodes populated dynamically -->
+              </div>
+            </div>
+
+            <!-- 2. Evidence Timeline & Event Inspector -->
+            <div class="card">
+              <div class="card-title-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                <div class="card-title"><i class="fa-solid fa-clock"></i> Chronological Investigation Timeline</div>
+                <div style="display:flex; gap:0.4rem;">
+                  <button class="pill-badge info" id="filter-inv-all" style="border:none; cursor:pointer;">All Events</button>
+                  <button class="pill-badge warning" id="filter-inv-proc" style="border:none; cursor:pointer;">Process Only</button>
+                  <button class="pill-badge error" id="filter-inv-net" style="border:none; cursor:pointer;">Network Only</button>
+                </div>
+              </div>
+              <div style="margin-top:0.75rem; max-height:220px; overflow-y:auto;" id="inv-timeline-list">
+                <!-- Timeline items populated dynamically -->
+              </div>
+            </div>
+
+            <!-- 3. MITRE ATT&CK Causal Mapping Matrix -->
+            <div class="card">
+              <div class="card-title-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                <div>
+                  <div class="card-title"><i class="fa-solid fa-table-cells"></i> MITRE ATT&CK Matrix</div>
+                  <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Reference Catalog — Highlighted cells indicate observed telemetry or inferred behaviors.</div>
+                </div>
+                <div style="font-size:0.72rem; color:var(--text-muted);">
+                  <span style="color:var(--color-red); font-weight:700;">■ Observed</span> | 
+                  <span style="color:var(--color-orange); font-weight:700;">■ Inferred</span> | 
+                  <span style="color:var(--text-muted);">■ Not Observed</span>
+                </div>
+              </div>
+              <div class="mitre-matrix-scroller" style="margin-top:0.75rem;">
+                <div class="mitre-matrix-grid" id="mitre-matrix-body">
+                  <!-- Columns populated dynamically by Javascript -->
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB: KNOWLEDGE BASE -->
+      <div class="tab-content" id="tab-kb">
+        <div class="card">
+          <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <span><i class="fa-solid fa-brain"></i> Behavioral Memory & Knowledge Base Search</span>
+            <span class="pill-badge info" style="font-size:0.75rem;"><i class="fa-solid fa-database"></i> Long-Term Memory Engine v2.4</span>
+          </div>
+          <p class="text-secondary" style="font-size:0.8rem; margin-top:0.25rem; margin-bottom:1rem;">
+            ATLAS long-term behavioral memory repository. Search historical behaviors, retrieve top-K similar patterns, analyze feature contributions, trace provenance, and review analyst feedback.
+          </p>
+
+          <!-- TOP CONTROL BAR: Search Input & Multi-Filters -->
+          <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto; gap:0.5rem; background:rgba(15,23,42,0.6); border:1px solid var(--border-color); padding:0.75rem; border-radius:6px; margin-bottom:1rem; align-items:center;">
+            <div>
+              <input type="text" id="kb-search-input" class="form-control" placeholder="Search Pattern ID, Fingerprint, Process, Cmd, MITRE, IOC..." style="width:100%; font-size:0.8rem; padding:0.4rem 0.6rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:var(--text-primary); border-radius:4px;" />
+            </div>
+            <div>
+              <select id="kb-filter-class" style="width:100%; font-size:0.75rem; padding:0.4rem; background:rgba(0,0,0,0.4); border:1px solid var(--border-color); color:var(--text-primary); border-radius:4px;">
+                <option value="All">Class: All</option>
+                <option value="Malicious">Malicious</option>
+                <option value="Suspicious">Suspicious</option>
+                <option value="Benign">Benign</option>
+                <option value="Unknown">Unknown</option>
+              </select>
+            </div>
+            <div>
+              <select id="kb-filter-validation" style="width:100%; font-size:0.75rem; padding:0.4rem; background:rgba(0,0,0,0.4); border:1px solid var(--border-color); color:var(--text-primary); border-radius:4px;">
+                <option value="All">Validation: All</option>
+                <option value="Analyst Confirmed">Confirmed</option>
+                <option value="Analyst Rejected">Rejected</option>
+                <option value="Needs Review">Needs Review</option>
+                <option value="Unreviewed">Unreviewed</option>
+              </select>
+            </div>
+            <div>
+              <select id="kb-filter-sim" style="width:100%; font-size:0.75rem; padding:0.4rem; background:rgba(0,0,0,0.4); border:1px solid var(--border-color); color:var(--text-primary); border-radius:4px;">
+                <option value="0">Min Sim: Any</option>
+                <option value="50">Min Sim: 50%+</option>
+                <option value="75">Min Sim: 75%+</option>
+                <option value="90">Min Sim: 90%+</option>
+              </select>
+            </div>
+            <div>
+              <select id="kb-filter-pagesize" style="width:100%; font-size:0.75rem; padding:0.4rem; background:rgba(0,0,0,0.4); border:1px solid var(--border-color); color:var(--text-primary); border-radius:4px;">
+                <option value="10">Show 10</option>
+                <option value="20" selected>Show 20</option>
+                <option value="50">Show 50</option>
+              </select>
+            </div>
+            <div>
+              <button id="btn-kb-search" class="btn btn-primary" style="font-size:0.75rem; padding:0.4rem 0.8rem; background:var(--color-blue);"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+            </div>
+          </div>
+          
+          <div class="dna-explorer-grid" style="display: grid; grid-template-columns: 1fr 360px; gap: 1.25rem;">
+            
+            <!-- Left Column: Active Patterns Memory Table -->
+            <div style="display:flex; flex-direction:column; gap:1rem;">
+              <div class="dna-comparison-row" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                <div class="card" style="background-color:rgba(0,0,0,0.15); border-color:var(--border-color); padding:0.75rem;">
+                  <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-fingerprint"></i> DNA Barcode Fingerprint</div>
+                  <div class="dna-barcode-container" style="margin-top:0.4rem;">
+                    <div class="barcode-strip" id="dna-barcode-strip" style="height:16px;">
+                      <!-- Populated dynamically -->
+                    </div>
+                    <span class="text-secondary" style="font-size:0.65rem; font-family:'Fira Code', monospace; display:block; text-align:center; margin-top:4px;" id="lbl-dna-fingerprint-id">DNA Hash: A8C4-92DF-E210-4A3C</span>
+                  </div>
+                </div>
+
+                <div class="card" style="background-color:rgba(0,0,0,0.15); border-color:var(--border-color); padding:0.75rem;">
+                  <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-code"></i> Spectral Mapping Formula</div>
+                  <div class="vector-formula-box" style="margin-top:0.3rem; padding:0.35rem; font-size:0.72rem;">
+                    v = eigenvalues( L_sym ( Graph ) ) <br>
+                    ||v||_2 = 1.0 (L2 Normalized), dim = 128
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pattern Memory Table -->
+              <div class="card" style="border-color:var(--border-color); background-color:rgba(0,0,0,0.1); padding:0.75rem; flex:1;">
+                <div class="card-title" style="font-size:0.85rem; display:flex; justify-content:space-between;">
+                  <span><i class="fa-solid fa-server"></i> Validated Behavior Pattern Records</span>
+                  <span id="lbl-kb-total-count" style="font-size:0.75rem; color:var(--text-secondary);">0 Memory Records</span>
+                </div>
+                
+                <div style="margin-top: 0.5rem; overflow-x: auto; max-height:280px; overflow-y:auto;">
+                  <table class="ioc-table" style="font-size:0.75rem;">
+                    <thead>
+                      <tr>
+                        <th>Pattern ID</th>
+                        <th>Threat Class</th>
+                        <th>Novelty</th>
+                        <th>BSF Sim</th>
+                        <th>CCF Conf</th>
+                        <th>MITRE</th>
+                        <th>Campaign</th>
+                        <th>Obs</th>
+                        <th>Validation</th>
+                      </tr>
+                    </thead>
+                    <tbody id="kb-patterns-tbody">
+                      <!-- Loaded dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Server-Side Pagination Bar -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.75rem; padding-top:0.5rem; border-top:1px solid var(--border-color); font-size:0.75rem;">
+                  <button id="btn-kb-prev" class="btn" style="padding:0.25rem 0.6rem; font-size:0.7rem; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-primary);"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                  <span id="lbl-kb-page-info" style="color:var(--text-secondary); font-weight:600;">Page 1 of 1</span>
+                  <button id="btn-kb-next" class="btn" style="padding:0.25rem 0.6rem; font-size:0.7rem; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-primary);">Next <i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Behavior DNA Explorer (Renamed & Overhauled) -->
+            <div class="card" style="background-color:rgba(30,41,59,0.3); border-color:var(--border-color); padding:1rem; display:flex; flex-direction:column; gap:0.6rem;" id="kb-genomic-explorer-card">
+              <div class="card-title" style="font-size:0.9rem; color:var(--color-blue); border-bottom:1px solid var(--border-color); padding-bottom:0.4rem; display:flex; justify-content:space-between; align-items:center;">
+                <span><i class="fa-solid fa-dna"></i> Behavior DNA Explorer</span>
+                <span id="lbl-behavior-version" class="pill-badge info" style="font-size:0.65rem;">v1.3</span>
+              </div>
+              
+              <div style="display:flex; flex-direction:column; gap:0.4rem; font-size:0.75rem;">
+                <div style="display:flex; justify-content:space-between;">
+                  <span class="text-secondary" title="Pattern ID Identifier">Pattern ID</span>
+                  <span id="lbl-genomic-id" style="font-family:'Fira Code', monospace; font-weight:700; color:var(--text-primary);">--</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span class="text-secondary" title="Pattern Severity Classification">Pattern Severity</span>
+                  <span id="lbl-genomic-class" class="pill-badge info" style="font-size:0.68rem;">--</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span class="text-secondary" title="Novelty status based on Locality Sensitive Hashing & LOF distance">Novelty Status (NSF)</span>
+                  <span id="lbl-genomic-nsf" class="pill-badge info" style="font-size:0.68rem;">--</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span class="text-secondary" title="BSF: How similar is this behavior to previously known patterns?">Behavioral Similarity (BSF)</span>
+                  <span id="lbl-genomic-bsf" style="font-weight:700; color:var(--color-blue);">--</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span class="text-secondary" title="CCF: Calibrated reliability based on KB size & evidence quality (Platt Scaled)">Calibrated Confidence (CCF)</span>
+                  <span id="lbl-genomic-ccf" style="font-weight:700; color:var(--color-green);">--</span>
+                </div>
+
+                <!-- Disambiguation Banner: Endpoint Risk vs Pattern Metrics -->
+                <div style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:4px; padding:0.35rem 0.5rem; font-size:0.68rem; color:var(--text-secondary); margin-top:0.15rem;">
+                  <i class="fa-solid fa-circle-info" style="color:var(--color-blue);"></i> <strong style="color:var(--text-primary);">Score Disambiguation:</strong> 
+                  <span id="lbl-score-disambiguation">Pattern Confidence (CCF) measures behavioral similarity reliability, distinct from overall Endpoint Host Risk.</span>
+                </div>
+
+                <!-- Why This Pattern Is Known (Explainability Card) -->
+                <div style="background:rgba(15,23,42,0.6); border:1px solid var(--border-color); padding:0.5rem; border-radius:4px; margin-top:0.2rem;">
+                  <div style="font-size:0.72rem; font-weight:700; color:var(--color-blue); margin-bottom:0.25rem; display:flex; justify-content:space-between; align-items:center;">
+                    <span><i class="fa-solid fa-lightbulb"></i> Why This Pattern Is Known</span>
+                    <span id="lbl-why-sim-tag" style="font-size:0.65rem; color:var(--color-cyan);">--</span>
+                  </div>
+                  <div id="lbl-why-pattern-known" style="font-size:0.68rem; display:flex; flex-direction:column; gap:0.2rem; color:var(--text-secondary);">
+                    <!-- Populated dynamically -->
+                  </div>
+                </div>
+
+                <!-- Normalized Execution Flow -->
+                <div style="border-top:1px solid var(--border-color); padding-top:0.4rem;">
+                  <span class="text-secondary" style="font-size:0.7rem; font-weight:600; display:block; margin-bottom:0.25rem;">Normalized Execution Flow</span>
+                  <div id="lbl-behavior-sequence-flow" style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); padding:0.4rem; border-radius:4px; font-family:'Fira Code', monospace; font-size:0.68rem; line-height:1.3; color:var(--color-cyan); max-height:65px; overflow-y:auto;">
+                    --
+                  </div>
+                </div>
+
+                <!-- Deep Links to Threat & Investigation -->
+                <div style="border-top:1px solid var(--border-color); padding-top:0.4rem; display:flex; gap:0.4rem;">
+                  <button id="btn-kb-link-inv" class="btn" style="flex:1; font-size:0.68rem; padding:0.25rem; background:rgba(59,130,246,0.15); border:1px solid var(--color-blue); color:var(--color-blue);"><i class="fa-solid fa-magnifying-glass-chart"></i> View Investigation</button>
+                  <button id="btn-kb-link-threat" class="btn" style="flex:1; font-size:0.68rem; padding:0.25rem; background:rgba(239,68,68,0.15); border:1px solid var(--color-red); color:var(--color-red);"><i class="fa-solid fa-shield-virus"></i> View Threat</button>
+                </div>
+
+                <!-- Analyst Validation Controls -->
+                <div style="border-top:1px solid var(--border-color); padding-top:0.4rem; display:flex; flex-direction:column; gap:0.3rem;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="text-secondary" style="font-size:0.7rem;">Analyst Status</span>
+                    <span id="lbl-genomic-analyst" class="pill-badge info" style="font-size:0.65rem;">Unreviewed</span>
+                  </div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.3rem; margin-top:0.2rem;">
+                    <button class="btn btn-sm btn-kb-act" data-act="Analyst Confirmed" style="font-size:0.63rem; padding:0.2rem; background:rgba(16,185,129,0.2); border:1px solid var(--color-green); color:var(--color-green);">Confirm</button>
+                    <button class="btn btn-sm btn-kb-act" data-act="Analyst Rejected" style="font-size:0.63rem; padding:0.2rem; background:rgba(239,68,68,0.2); border:1px solid var(--color-red); color:var(--color-red);">Reject FP</button>
+                    <button class="btn btn-sm btn-kb-act" data-act="Needs Review" style="font-size:0.63rem; padding:0.2rem; background:rgba(245,158,11,0.2); border:1px solid var(--color-orange); color:var(--color-orange);">Review</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          <!-- BOTTOM SECTION: Knowledge Base Relationships Explorer -->
+          <div class="card" style="margin-top:1rem; background:rgba(15,23,42,0.4); border-color:var(--border-color); padding:0.85rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem; margin-bottom:0.6rem;">
+              <div style="font-size:0.85rem; font-weight:700; color:var(--text-primary);"><i class="fa-solid fa-diagram-project"></i> Behavioral Knowledge Relationships & Provenance</div>
+              <div style="display:flex; gap:0.4rem;" id="kb-rel-tab-buttons">
+                <button class="btn btn-sm kb-rel-btn active" data-tab="mitre" style="font-size:0.7rem; padding:0.25rem 0.6rem;">MITRE ATT&CK</button>
+                <button class="btn btn-sm kb-rel-btn" data-tab="iocs" style="font-size:0.7rem; padding:0.25rem 0.6rem;">Related IOCs</button>
+                <button class="btn btn-sm kb-rel-btn" data-tab="campaigns" style="font-size:0.7rem; padding:0.25rem 0.6rem;">Campaigns</button>
+                <button class="btn btn-sm kb-rel-btn" data-tab="similar" style="font-size:0.7rem; padding:0.25rem 0.6rem;">Top-K Similar</button>
+                <button class="btn btn-sm kb-rel-btn" data-tab="audit" style="font-size:0.7rem; padding:0.25rem 0.6rem;">Analyst History</button>
+              </div>
+            </div>
+
+            <!-- Relationships Tab Content Area -->
+            <div id="kb-rel-tab-content" style="font-size:0.75rem; min-height:80px;">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB: TELEMETRY -->
+      <div class="tab-content" id="tab-telemetry">
+        
+        <!-- 1. COLLECTION STATUS & CAPABILITIES HEADER -->
+        <div class="card" style="padding:1rem; margin-bottom:1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+            <div>
+              <h3 style="font-size:0.95rem; font-weight:700; color:var(--text-primary); margin:0; display:flex; align-items:center; gap:0.5rem;">
+                <i class="fa-solid fa-satellite-dish" style="color:var(--color-blue);"></i> Endpoint Telemetry Engine & Collector Health
+              </h3>
+              <p class="text-secondary" style="font-size:0.72rem; margin:0.2rem 0 0 0;">Live Windows Event Logs, Process Handles, Socket Connections, PowerShell Activity & Sysmon Provenance</p>
+            </div>
+            <div style="display:flex; gap:0.4rem; align-items:center;">
+              <span id="telemetry-mode-badge" class="pill-badge success" style="font-size:0.65rem;"><i class="fa-solid fa-circle-play"></i> LIVE TELEMETRY</span>
+              <span id="telemetry-stream-badge" class="pill-badge info" style="font-size:0.65rem;"><i class="fa-solid fa-arrows-rotate"></i> LIVE — POLLING</span>
+            </div>
+          </div>
+
+          <!-- Collector Health Table -->
+          <div style="overflow-x:auto; margin-top:0.5rem;">
+            <table class="collector-health-table">
+              <thead>
+                <tr>
+                  <th>Collector</th>
+                  <th>Status</th>
+                  <th>Last Event</th>
+                  <th>Events/sec</th>
+                  <th>Errors</th>
+                  <th>Dropped Events</th>
+                </tr>
+              </thead>
+              <tbody id="collector-health-tbody">
+                <tr><td>Win Event Log</td><td><span class="pill-badge success">AVAILABLE</span></td><td>--</td><td>0.0</td><td>0</td><td>0</td></tr>
+                <tr><td>Process Collector</td><td><span class="pill-badge success">AVAILABLE</span></td><td>--</td><td>0.0</td><td>0</td><td>0</td></tr>
+                <tr><td>Network Collector</td><td><span class="pill-badge success">AVAILABLE</span></td><td>--</td><td>0.0</td><td>0</td><td>0</td></tr>
+                <tr><td>DNS Collector</td><td><span class="pill-badge warning">UNAVAILABLE</span></td><td>Never</td><td>0.0</td><td>0</td><td>0</td></tr>
+                <tr><td>PowerShell Monitor</td><td><span class="pill-badge success">AVAILABLE</span></td><td>--</td><td>0.0</td><td>0</td><td>0</td></tr>
+                <tr><td>Sysmon Provenance</td><td><span class="pill-badge warning">NOT INSTALLED</span></td><td>Never</td><td>0.0</td><td>0</td><td>0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 2. TELEMETRY METRICS SUMMARY CARDS -->
+        <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); margin-bottom:1rem;">
+          <div class="metric-card">
+            <div class="metric-label">Total Events</div>
+            <div class="metric-value" id="telem-stat-total">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Processes</div>
+            <div class="metric-value" id="telem-stat-proc">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Active Sockets</div>
+            <div class="metric-value" id="telem-stat-sock">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">DNS Queries</div>
+            <div class="metric-value" id="telem-stat-dns">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Auth Events</div>
+            <div class="metric-value" id="telem-stat-auth">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">File Events</div>
+            <div class="metric-value" id="telem-stat-file">0</div>
+          </div>
+        </div>
+
+        <!-- 3. LIVE TELEMETRY STREAM TABLE & FILTER BAR -->
+        <div class="card" style="padding:0.85rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+            <div class="card-title" style="font-size:0.85rem; margin:0;">
+              <i class="fa-solid fa-list-check"></i> Raw Endpoint Telemetry Stream
+            </div>
+            <div style="display:flex; gap:0.4rem; align-items:center;">
+              <input type="text" id="telem-search-input" placeholder="Search PID, Process, IP..." style="font-size:0.72rem; padding:0.25rem 0.5rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:var(--text-primary); border-radius:4px; width:180px;">
+              <select id="telem-type-select" style="font-size:0.72rem; padding:0.25rem 0.5rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:var(--text-primary); border-radius:4px;">
+                <option value="">All Types</option>
+                <option value="process">Process</option>
+                <option value="network">Network</option>
+                <option value="powershell">PowerShell</option>
+                <option value="file">File</option>
+                <option value="authentication">Auth</option>
+              </select>
+              <button class="btn btn-sm btn-info" style="font-size:0.65rem; padding:0.25rem 0.5rem;" onclick="refreshTelemetryData()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto; max-height:480px; overflow-y:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.72rem; text-align:left;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border-color); color:var(--text-muted);">
+                  <th style="padding:0.4rem;">Time</th>
+                  <th style="padding:0.4rem;">Type</th>
+                  <th style="padding:0.4rem;">Source</th>
+                  <th style="padding:0.4rem;">Process / Target</th>
+                  <th style="padding:0.4rem;">User</th>
+                  <th style="padding:0.4rem;">Network Details</th>
+                  <th style="padding:0.4rem;">Payload / Command</th>
+                  <th style="padding:0.4rem;">Mode</th>
+                </tr>
+              </thead>
+              <tbody id="telemetry-stream-tbody">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB: CAMPAIGNS -->
+      <div class="tab-content" id="tab-campaigns">
+        <!-- Campaign Engine Status & Controls Bar -->
+        <div class="card" style="margin-bottom: 1.25rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+            <div>
+              <div class="card-title" style="font-size:1.1rem;"><i class="fa-solid fa-diagram-project" style="color:var(--color-cyan);"></i> Campaign Intelligence & Behavioral Correlation Engine</div>
+              <p class="text-secondary" style="font-size:0.78rem; margin-top:0.2rem;">Multi-source behavioral correlation across T-Pot decoys, process trees, network sockets, PowerShell & MITRE mappings.</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+              <select id="campaign-source-mode-select" class="form-control" style="font-size:0.75rem; padding:0.3rem 0.6rem; background:rgba(0,0,0,0.3); color:var(--text-primary); border:1px solid rgba(255,255,255,0.1); border-radius:4px;" onchange="loadCampaignData()">
+                <option value="LIVE">LIVE CAMPAIGN</option>
+                <option value="SCENARIO">SCENARIO / SIMULATION</option>
+              </select>
+              <select id="campaign-severity-filter" class="form-control" style="font-size:0.75rem; padding:0.3rem 0.6rem; background:rgba(0,0,0,0.3); color:var(--text-primary); border:1px solid rgba(255,255,255,0.1); border-radius:4px;" onchange="loadCampaignData()">
+                <option value="ALL">All Severities</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+              <button class="btn btn-secondary" style="font-size:0.75rem; padding:0.35rem 0.75rem;" onclick="loadCampaignData()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+              <button class="btn btn-primary" style="font-size:0.75rem; padding:0.35rem 0.75rem;" onclick="triggerCampaignScenarioModal()"><i class="fa-solid fa-flask"></i> Scenario</button>
+            </div>
+          </div>
+
+          <!-- Engine Status Summary -->
+          <div style="display:flex; gap:1.5rem; margin-top:1rem; padding-top:0.8rem; border-top:1px solid rgba(255,255,255,0.06); font-size:0.75rem; color:var(--text-secondary); flex-wrap:wrap; align-items:center;">
+            <div>Engine Status: <span class="pill-badge success" id="campaign-engine-status-badge">CONNECTED</span></div>
+            <div>Input Stream: <strong style="color:var(--color-cyan);" id="campaign-engine-input-stream">LIVE</strong></div>
+            <div>Last Event: <strong style="color:var(--text-primary);" id="campaign-engine-last-event">--</strong></div>
+            <div>Events Analyzed: <strong style="color:var(--text-primary);" id="campaign-engine-events-analyzed">0</strong></div>
+            <div>Events Correlated: <strong style="color:var(--text-primary);" id="campaign-engine-events-correlated">0</strong></div>
+            <div>Attack Sessions: <strong style="color:var(--text-primary);" id="campaign-engine-attack-sessions">0</strong></div>
+          </div>
+        </div>
+
+        <!-- Campaign Metrics Summary Grid -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; margin-bottom:1.25rem;">
+          <div class="card" style="padding:0.9rem; text-align:center; background:rgba(0,0,0,0.2);">
+            <div style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Active Campaigns</div>
+            <div style="font-size:1.6rem; font-weight:800; color:var(--color-cyan); margin-top:0.2rem;" id="camp-metric-active">0</div>
+          </div>
+          <div class="card" style="padding:0.9rem; text-align:center; background:rgba(0,0,0,0.2);">
+            <div style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Candidates</div>
+            <div style="font-size:1.6rem; font-weight:800; color:var(--color-orange); margin-top:0.2rem;" id="camp-metric-candidates">0</div>
+          </div>
+          <div class="card" style="padding:0.9rem; text-align:center; background:rgba(0,0,0,0.2);">
+            <div style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Unknown Campaigns</div>
+            <div style="font-size:1.6rem; font-weight:800; color:var(--color-purple); margin-top:0.2rem;" id="camp-metric-unknown">0</div>
+          </div>
+          <div class="card" style="padding:0.9rem; text-align:center; background:rgba(0,0,0,0.2);">
+            <div style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Validated</div>
+            <div style="font-size:1.6rem; font-weight:800; color:var(--color-green); margin-top:0.2rem;" id="camp-metric-validated">0</div>
+          </div>
+          <div class="card" style="padding:0.9rem; text-align:center; background:rgba(0,0,0,0.2);">
+            <div style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">High Risk</div>
+            <div style="font-size:1.6rem; font-weight:800; color:var(--color-red); margin-top:0.2rem;" id="camp-metric-high-risk">0</div>
+          </div>
+          <div class="card" style="padding:0.9rem; text-align:center; background:rgba(0,0,0,0.2);">
+            <div style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Sessions Linked</div>
+            <div style="font-size:1.6rem; font-weight:800; color:var(--text-primary); margin-top:0.2rem;" id="camp-metric-sessions">0</div>
+          </div>
+        </div>
+
+        <!-- Live Correlated Campaign Feed Table -->
+        <div class="card" style="margin-bottom: 1.25rem;">
+          <div class="card-title" style="font-size:0.95rem; margin-bottom:0.8rem;"><i class="fa-solid fa-list-check"></i> Live Correlated Campaign Feed</div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.75rem; text-align:left;">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:var(--text-secondary);">
+                  <th style="padding:0.5rem;">Campaign ID</th>
+                  <th style="padding:0.5rem;">Name & Behavior</th>
+                  <th style="padding:0.5rem;">Attribution</th>
+                  <th style="padding:0.5rem;">Stage</th>
+                  <th style="padding:0.5rem;">Infrastructure</th>
+                  <th style="padding:0.5rem;">Severity</th>
+                  <th style="padding:0.5rem;">Confidence</th>
+                  <th style="padding:0.5rem;">Validation</th>
+                  <th style="padding:0.5rem;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="campaign-feed-tbody">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Relationship Graph & Attack Chain Lifecycle View -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom: 1.25rem;">
+          <!-- Left: Relationship Graph -->
+          <div class="card">
+            <div class="card-title" style="font-size:0.9rem;"><i class="fa-solid fa-circle-nodes"></i> Campaign Relationship Graph</div>
+            <p class="text-secondary" style="font-size:0.72rem; margin-top:0.2rem; margin-bottom:0.8rem;">Evidence-backed topological connections between campaign nodes, IPs, hosts, and techniques.</p>
+            <div id="campaign-graph-canvas-container" style="height:260px; background:rgba(0,0,0,0.25); border:1px dashed rgba(255,255,255,0.08); border-radius:6px; position:relative; display:flex; justify-content:center; align-items:center;">
+              <svg id="campaign-graph-svg" style="width:100%; height:100%;"></svg>
+            </div>
+          </div>
+
+          <!-- Right: Attack Chain Progression -->
+          <div class="card">
+            <div class="card-title" style="font-size:0.9rem;"><i class="fa-solid fa-shoe-prints"></i> Attack Chain Progression</div>
+            <p class="text-secondary" style="font-size:0.72rem; margin-top:0.2rem; margin-bottom:0.8rem;">Lifecycle progression showing observed stages vs unobserved stages based strictly on telemetry evidence.</p>
+            <div id="campaign-lifecycle-stages-container" style="display:flex; flex-direction:column; gap:0.4rem; max-height:260px; overflow-y:auto; padding-right:0.3rem;">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CAMPAIGN INVESTIGATION DETAIL MODAL -->
+      <div id="campaign-investigation-modal" class="modal-backdrop" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.75); z-index:9999; justify-content:center; align-items:center;">
+        <div class="card" style="width:90%; max-width:900px; max-height:90vh; overflow-y:auto; background:var(--bg-card); border:1px solid rgba(255,255,255,0.15); padding:1.5rem; border-radius:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.8rem; margin-bottom:1rem;">
+            <div>
+              <div style="font-size:1.2rem; font-weight:700; color:var(--color-cyan);" id="modal-camp-title">CAMPAIGN DETAIL</div>
+              <div style="font-size:0.75rem; color:var(--text-secondary);" id="modal-camp-subtitle">Evidence & Attribution Breakdown</div>
+            </div>
+            <button class="btn btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.8rem;" onclick="closeCampaignInvestigationModal()"><i class="fa-solid fa-xmark"></i> Close</button>
+          </div>
+
+          <div id="modal-camp-body" style="font-size:0.8rem; line-height:1.5;">
+            <!-- Loaded dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: PLAYBOOKS (RESPONSE CENTER) -->
+
+      <!-- TAB: PLAYBOOKS (DEFENCE RESPONSE CENTER) -->
+      <div class="tab-content" id="tab-playbooks">
+        <div class="card" style="margin-bottom:1.25rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:1rem; margin-bottom:1rem;">
+            <div>
+              <div style="font-size:1.1rem; font-weight:700; color:var(--text-primary);"><i class="fa-solid fa-shield-halved" style="color:var(--color-cyan); margin-right:6px;"></i> ATLAS Defence Response Center</div>
+              <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">Evidence-driven mitigation, policy-gated authorization, and post-execution host state verification.</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap;">
+              <div>Automation Mode: <span class="pill-badge warning" id="defense-automation-mode">RECOMMENDATION ONLY</span></div>
+              <button class="btn btn-secondary" style="font-size:0.75rem; padding:0.35rem 0.75rem;" onclick="loadPlaybookData()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+            </div>
+          </div>
+
+          <!-- Host Capability Matrix Bar -->
+          <div style="display:flex; gap:1.2rem; flex-wrap:wrap; font-size:0.72rem; color:var(--text-secondary); padding:0.6rem 0.9rem; background:rgba(0,0,0,0.2); border-radius:6px; align-items:center;" id="host-capability-matrix-bar">
+            <div>Process Control: <span class="pill-badge success" id="cap-proc-badge">AVAILABLE</span></div>
+            <div>Firewall Control: <span class="pill-badge warning" id="cap-fw-badge">LIMITED</span></div>
+            <div>File Quarantine: <span class="pill-badge success" id="cap-quar-badge">AVAILABLE</span></div>
+            <div>Host Isolation: <span class="pill-badge warning" id="cap-iso-badge">REQUIRES ADMIN</span></div>
+            <div>Admin Privileges: <strong style="color:var(--text-primary);" id="cap-admin-status">NO</strong></div>
+          </div>
+        </div>
+
+        <!-- Current Threat Context & Explainable Decision Card -->
+        <div class="card" style="margin-bottom:1.25rem; background:rgba(0,0,0,0.2);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:0.6rem;">
+            <div style="font-size:0.9rem; font-weight:700; color:var(--color-cyan);"><i class="fa-solid fa-brain"></i> ATLAS Threat Assessment & Decision Rationale</div>
+            <div id="playbook-threat-badge"><span class="pill-badge success">MONITORING</span></div>
+          </div>
+          
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap:0.8rem; margin-bottom:0.9rem; font-size:0.75rem; text-align:center;">
+            <div style="padding:0.6rem; background:rgba(255,255,255,0.03); border-radius:6px;">
+              <div style="color:var(--text-secondary); font-size:0.68rem; text-transform:uppercase;">Initial Risk</div>
+              <div style="font-size:1.3rem; font-weight:800; color:var(--color-green);" id="pb-threat-risk">0.00</div>
+            </div>
+            <div style="padding:0.6rem; background:rgba(255,255,255,0.03); border-radius:6px;">
+              <div style="color:var(--text-secondary); font-size:0.68rem; text-transform:uppercase;">Residual Risk</div>
+              <div style="font-size:1.3rem; font-weight:800; color:var(--color-green);" id="pb-threat-residual-risk">0.00</div>
+            </div>
+            <div style="padding:0.6rem; background:rgba(255,255,255,0.03); border-radius:6px;">
+              <div style="color:var(--text-secondary); font-size:0.68rem; text-transform:uppercase;">Confidence</div>
+              <div style="font-size:1.3rem; font-weight:800; color:var(--text-muted);" id="pb-threat-conf">--</div>
+            </div>
+            <div style="padding:0.6rem; background:rgba(255,255,255,0.03); border-radius:6px;">
+              <div style="color:var(--text-secondary); font-size:0.68rem; text-transform:uppercase;">Incident State</div>
+              <div style="font-size:1.0rem; font-weight:700; color:var(--color-green);" id="pb-threat-incident-state">NO_INCIDENT</div>
+            </div>
+            <div style="padding:0.6rem; background:rgba(255,255,255,0.03); border-radius:6px;">
+              <div style="color:var(--text-secondary); font-size:0.68rem; text-transform:uppercase;">Evidence Weight</div>
+              <div style="font-size:1.1rem; font-weight:700; color:var(--text-muted);" id="pb-threat-evidence">NONE</div>
+            </div>
+            <div style="padding:0.6rem; background:rgba(255,255,255,0.03); border-radius:6px;">
+              <div style="color:var(--text-secondary); font-size:0.68rem; text-transform:uppercase;">Affected Asset</div>
+              <div style="font-size:1.1rem; font-weight:700; color:var(--text-primary);" id="pb-threat-asset">Local Host</div>
+            </div>
+          </div>
+
+          <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;" id="pb-threat-rationale-box">
+            <!-- Loaded dynamically -->
+          </div>
+        </div>
+
+        <!-- Response Action Matrix & Controls -->
+        <div class="card" style="margin-bottom:1.25rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+            <div style="font-size:0.95rem; font-weight:700; color:var(--text-primary);"><i class="fa-solid fa-list-check"></i> Formulated Response Actions</div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button class="btn btn-secondary" id="btn-playbook-dry-run" style="font-size:0.75rem; padding:0.35rem 0.75rem;" onclick="runPlaybookDryRun()"><i class="fa-solid fa-flask"></i> Dry Run Preview</button>
+              <button class="btn btn-primary" id="btn-playbook-authorize" style="font-size:0.75rem; padding:0.35rem 0.75rem; background:var(--color-orange); border-color:var(--color-orange);" onclick="authorizePlaybookAction()"><i class="fa-solid fa-shield-check"></i> Authorize Actions</button>
+              <button class="btn btn-primary" id="btn-playbook-execute" style="font-size:0.75rem; padding:0.35rem 0.75rem;" onclick="executePlaybookAction()"><i class="fa-solid fa-play"></i> Execute Selected Playbook</button>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.75rem; text-align:left;">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:var(--text-secondary);">
+                  <th style="padding:0.5rem;">Action ID</th>
+                  <th style="padding:0.5rem;">Type</th>
+                  <th style="padding:0.5rem;">Category</th>
+                  <th style="padding:0.5rem;">Target</th>
+                  <th style="padding:0.5rem;">Reason & Evidence</th>
+                  <th style="padding:0.5rem;">Authorization</th>
+                  <th style="padding:0.5rem;">Status</th>
+                  <th style="padding:0.5rem;">Verification</th>
+                </tr>
+              </thead>
+              <tbody id="playbook-actions-tbody">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Output Box -->
+          <div id="playbook-output-preview-box" style="display:none; margin-top:1rem; padding:0.8rem; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; font-family:'Fira Code', monospace; font-size:0.72rem; color:var(--color-cyan); white-space:pre-wrap; max-height:200px; overflow-y:auto;">
+          </div>
+        </div>
+
+        <!-- Defensive Action History Table -->
+        <div class="card">
+          <div style="font-size:0.95rem; font-weight:700; color:var(--text-primary); margin-bottom:0.8rem;"><i class="fa-solid fa-clock-rotate-left"></i> Defensive Action Audit History</div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.73rem; text-align:left;">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:var(--text-secondary);">
+                  <th style="padding:0.4rem;">Timestamp</th>
+                  <th style="padding:0.4rem;">Actor</th>
+                  <th style="padding:0.4rem;">Action</th>
+                  <th style="padding:0.4rem;">Target</th>
+                  <th style="padding:0.4rem;">Reason</th>
+                  <th style="padding:0.4rem;">Status</th>
+                  <th style="padding:0.4rem;">Verification</th>
+                </tr>
+              </thead>
+              <tbody id="playbook-audit-tbody">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB: ANALYTICS -->
+      <div class="tab-content" id="tab-analytics">
+        
+        <!-- Global Analytics Control Bar -->
+        <div class="card" style="margin-bottom:1.25rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:1rem; margin-bottom:1rem;">
+            <div>
+              <div class="card-title" style="font-size:1.1rem;"><i class="fa-solid fa-chart-line" style="color:var(--color-cyan);"></i> ATLAS Security Analytics & Threat Intelligence Engine</div>
+              <p class="text-secondary" style="font-size:0.78rem; margin-top:0.2rem;">Verifiable facts, temporal attack timelines, baseline deviations, dynamic attack stories, and evidence-backed risk intelligence.</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+              <select id="analytics-source-mode-select" class="form-control" style="font-size:0.75rem; padding:0.3rem 0.6rem; background:rgba(0,0,0,0.3); color:var(--text-primary); border:1px solid rgba(255,255,255,0.1); border-radius:4px;" onchange="loadAnalyticsData()">
+                <option value="LIVE">LIVE STREAM</option>
+                <option value="SCENARIO">SCENARIO / SIMULATION</option>
+              </select>
+              <select id="analytics-time-range-select" class="form-control" style="font-size:0.75rem; padding:0.3rem 0.6rem; background:rgba(0,0,0,0.3); color:var(--text-primary); border:1px solid rgba(255,255,255,0.1); border-radius:4px;" onchange="loadAnalyticsData()">
+                <option value="24h">Last 24 Hours</option>
+                <option value="15m">Last 15 Minutes</option>
+                <option value="1h">Last 1 Hour</option>
+                <option value="6h">Last 6 Hours</option>
+                <option value="7d">Last 7 Days</option>
+                <option value="all">All Time</option>
+              </select>
+              <button class="btn btn-secondary" style="font-size:0.75rem; padding:0.35rem 0.75rem;" onclick="loadAnalyticsData()"><i class="fa-solid fa-rotate"></i> Refresh Analytics</button>
+            </div>
+          </div>
+
+          <!-- Data Freshness & Ingestion Health Bar -->
+          <div style="display:flex; gap:1.5rem; font-size:0.75rem; color:var(--text-secondary); flex-wrap:wrap; align-items:center;">
+            <div>Ingestion Status: <span class="pill-badge success" id="analytics-freshness-status-badge">CONNECTED</span></div>
+            <div>Data Window: <strong style="color:var(--color-cyan);" id="analytics-freshness-window">Last 24 Hours</strong></div>
+            <div>Last Event: <strong style="color:var(--text-primary);" id="analytics-freshness-last-event">--</strong></div>
+            <div>Events Analyzed: <strong style="color:var(--text-primary);" id="analytics-freshness-events-analyzed">0</strong></div>
+            <div>Analytics Health: <strong style="color:var(--color-green);" id="analytics-freshness-health">OPTIMAL</strong></div>
+          </div>
+        </div>
+
+        <!-- Executive Security Overview Grid -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:1rem; margin-bottom:1.25rem;">
+          <div class="card" style="padding:0.9rem; text-align:center; background:rgba(0,0,0,0.2);">
+            <div style="font-size:0.68rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Total Events</div>
+            <div style="font-size:1.6rem; font-weight:800; color:var(--color-cyan); margin-top:0.2rem;" id="analytics-metric-total-events">0</div>
+          </div>
+          <div class="card" style="padding:0.9rem; text-align:center; background:rgba(0,0,0,0.2);">
+            <div style="font-size:0.68rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Unique Processes</div>
+            <div style="font-size:1.6rem; font-weight:800; color:var(--text-primary); margin-top:0.2rem;" id="analytics-metric-processes">0</div>
+          </div>
+          <div class="card" style="padding:0.9rem; text-align:center; background:rgba(0,0,0,0.2);">
+            <div style="font-size:0.68rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Network Sockets</div>
+            <div style="font-size:1.6rem; font-weight:800; color:var(--color-blue); margin-top:0.2rem;" id="analytics-metric-sockets">0</div>
+          </div>
+          <div class="card" style="padding:0.9rem; text-align:center; background:rgba(0,0,0,0.2);">
+            <div style="font-size:0.68rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Threat Events</div>
+            <div style="font-size:1.6rem; font-weight:800; color:var(--color-orange); margin-top:0.2rem;" id="analytics-metric-threats">0</div>
+          </div>
+          <div class="card" style="padding:0.9rem; text-align:center; background:rgba(0,0,0,0.2);">
+            <div style="font-size:0.68rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Active Campaigns</div>
+            <div style="font-size:1.6rem; font-weight:800; color:var(--color-purple); margin-top:0.2rem;" id="analytics-metric-campaigns">0</div>
+          </div>
+          <div class="card" style="padding:0.9rem; text-align:center; background:rgba(0,0,0,0.2);">
+            <div style="font-size:0.68rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Current Risk</div>
+            <div style="font-size:1.6rem; font-weight:800; color:var(--color-orange); margin-top:0.2rem;" id="analytics-metric-current-risk">0.00</div>
+          </div>
+          <div class="card" style="padding:0.9rem; text-align:center; background:rgba(0,0,0,0.2);">
+            <div style="font-size:0.68rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Residual Risk</div>
+            <div style="font-size:1.6rem; font-weight:800; color:var(--color-green); margin-top:0.2rem;" id="analytics-metric-residual-risk">0.00</div>
+          </div>
+        </div>
+
+        <!-- Calculated Performance & Latencies Card -->
+        <div class="exec-overview-grid" style="margin-bottom:1.25rem;">
+          <div class="overview-card" style="border-left:3px solid var(--color-cyan);">
+            <div class="overview-data">
+              <span class="overview-val" style="color:var(--color-cyan); font-size:1.4rem;" id="kpi-mttd">N/A</span>
+              <span class="overview-lbl">Mean Time to Detect (MTTD)</span>
+              <small style="display:block; font-size:0.68rem; color:var(--text-muted); margin-top:4px;" id="kpi-mttd-sub">Calculated from ingest timestamps</small>
+            </div>
+          </div>
+          <div class="overview-card" style="border-left:3px solid var(--color-green);">
+            <div class="overview-data">
+              <span class="overview-val" style="color:var(--color-green); font-size:1.4rem;" id="kpi-mttr">N/A</span>
+              <span class="overview-lbl">Mean Time to Respond (MTTR)</span>
+              <small style="display:block; font-size:0.68rem; color:var(--text-muted); margin-top:4px;" id="kpi-mttr-sub">Calculated from verified executions</small>
+            </div>
+          </div>
+          <div class="overview-card" style="border-left:3px solid var(--color-purple);">
+            <div class="overview-data">
+              <span class="overview-val" style="color:var(--color-purple); font-size:1.2rem;" id="kpi-latency-p50">P50: 8s | P90: 21s</span>
+              <span class="overview-lbl">Detection Latency Distribution</span>
+              <small style="display:block; font-size:0.68rem; color:var(--text-muted); margin-top:4px;">Percentile latencies</small>
+            </div>
+          </div>
+          <div class="overview-card" style="border-left:3px solid var(--color-orange);">
+            <div class="overview-data">
+              <span class="overview-val" style="color:var(--color-orange); font-size:0.95rem; line-height:1.2;" id="kpi-detection-quality-badge">LIMITED</span>
+              <span class="overview-lbl">Detection Quality Metrics</span>
+              <small style="display:block; font-size:0.68rem; color:var(--text-muted); margin-top:4px;" id="kpi-quality-sub">Analyst labels required for FPR/FNR</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Threats Landscape Charts Grid -->
+        <div class="threats-dashboard-grid" style="margin-bottom:1.25rem;">
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+              <div class="card-title" style="margin-bottom:0;"><i class="fa-solid fa-chart-area"></i> Threat Activity Over Time</div>
+              <select id="analytics-metric-type-select" class="form-control" style="font-size:0.7rem; padding:0.2rem 0.5rem; background:rgba(0,0,0,0.3); color:var(--text-primary); border:1px solid rgba(255,255,255,0.1); border-radius:4px;" onchange="loadAnalyticsData()">
+                <option value="events">All Events</option>
+                <option value="threats">Threat Events</option>
+                <option value="high_risk">High Risk Events</option>
+                <option value="network">Network Sockets</option>
+                <option value="process">Processes</option>
+                <option value="powershell">PowerShell</option>
+                <option value="auth">Authentication</option>
+                <option value="file">File Modifications</option>
+              </select>
+            </div>
+            <div style="height:220px; margin-top:1rem; position:relative;">
+              <canvas id="analytics-line-canvas" width="280" height="200"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="fa-solid fa-chart-bar"></i> Threat Class Distribution</div>
+            <div style="margin-top:1rem;" id="analytics-threat-classes-box">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Attack Story Engine (Sankey Flow with Inspector) -->
+        <div class="card" style="margin-bottom:1.25rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <div class="card-title"><i class="fa-solid fa-route" style="color:var(--color-cyan);"></i> Reconstructed Attack Story Flow</div>
+              <p class="text-secondary" style="font-size:0.75rem; margin-top:0.25rem;">Reconstructed event provenance path from user authentication through process hierarchy to network sockets and threat campaign.</p>
+            </div>
+            <div style="font-size:0.72rem; color:var(--text-muted);">Click any node to inspect provenance metadata</div>
+          </div>
+
+          <div style="background:#0b0f19; padding:1.2rem; border-radius:8px; overflow-x:auto;" id="analytics-attack-story-flow-box">
+            <!-- Dynamically rendered attack flow -->
+          </div>
+        </div>
+
+        <!-- Temporal Attack Timeline & MITRE Attack Progression -->
+        <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap:1.25rem; margin-bottom:1.25rem;">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:0.8rem;"><i class="fa-solid fa-clock-rotate-left"></i> Temporal Attack Timeline</div>
+            <div style="max-height:300px; overflow-y:auto; font-size:0.75rem;" id="analytics-temporal-timeline-box">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title" style="margin-bottom:0.8rem;"><i class="fa-solid fa-shield-halved"></i> MITRE ATT&CK Progression</div>
+            <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.75rem;" id="analytics-mitre-stages-box">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Process Behavior Analytics & Baseline Deviations -->
+        <div class="card" style="margin-bottom:1.25rem;">
+          <div class="card-title" style="margin-bottom:0.8rem;"><i class="fa-solid fa-microchip"></i> Process Behavior & Baseline Frequency Deviations</div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.75rem; text-align:left;">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:var(--text-secondary);">
+                  <th style="padding:0.4rem;">Process Name</th>
+                  <th style="padding:0.4rem;">Observed Count</th>
+                  <th style="padding:0.4rem;">Current Rate / hr</th>
+                  <th style="padding:0.4rem;">Baseline Rate / hr</th>
+                  <th style="padding:0.4rem;">Deviation</th>
+                  <th style="padding:0.4rem;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="analytics-process-behavior-tbody">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Network Intelligence & Live IP Geolocation Map -->
+        <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap:1.25rem; margin-bottom:1.25rem;">
+          <div class="card">
+            <div class="card-title"><i class="fa-solid fa-earth-americas"></i> Public IP Geolocation Threat Map</div>
+            <div class="world-map-container" style="margin-top:0.8rem; height:240px; position:relative;">
+              <canvas id="world-map-canvas" class="map-svg" style="width:100%; height:100%;"></canvas>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title" style="margin-bottom:0.8rem;"><i class="fa-solid fa-network-wired"></i> Top External Network Destinations</div>
+            <div style="font-size:0.75rem;" id="analytics-network-behavior-box">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 2D Risk vs Confidence Matrix & Data Quality Panel -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:0.8rem;"><i class="fa-solid fa-braille"></i> Risk vs Confidence Analytical Scatter Matrix</div>
+            <div style="height:220px; font-size:0.75rem; background:rgba(0,0,0,0.3); border-radius:6px; padding:0.8rem;" id="analytics-risk-confidence-matrix-box">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title" style="margin-bottom:0.8rem;"><i class="fa-solid fa-database"></i> Telemetry Completeness & Collector Health</div>
+            <div style="font-size:0.75rem;" id="analytics-data-quality-box">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Executive Security Story Narrative & Explainable Insights Engine -->
+        <div class="card" style="margin-bottom:1.25rem; background:rgba(0,0,0,0.3); border:1px solid rgba(0,229,255,0.2);">
+          <div style="font-size:0.95rem; font-weight:700; color:var(--color-cyan); margin-bottom:0.6rem;"><i class="fa-solid fa-scroll"></i> ATLAS Executive Security Story Narrative</div>
+          <div style="font-size:0.82rem; color:var(--text-primary); line-height:1.6; font-style:italic;" id="analytics-security-story-box">
+            <!-- Loaded dynamically -->
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:0.8rem;"><i class="fa-solid fa-lightbulb" style="color:var(--color-orange);"></i> Explainable Security Insights & Provenance</div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem;" id="analytics-insights-box">
+            <!-- Loaded dynamically -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB: AI REPORT -->
+      <div class="tab-content" id="tab-ai-report">
+        <div class="threats-dashboard-grid" style="grid-template-columns: 1.2fr 0.8fr; gap: 1.5rem;">
+          
+          <!-- LEFT COLUMN: EXECUTIVE EXPLAINER -->
+          <div class="card">
+            <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
+              <span><i class="fa-solid fa-brain"></i> AI Real-Time Executive Summary</span>
+              <button class="def-btn" id="btn-generate-ai-report" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: linear-gradient(135deg, var(--color-purple), var(--color-blue)); border:none; cursor:pointer;"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate Report</button>
+            </div>
+            <p class="text-secondary" style="font-size:0.85rem; margin-top:0.25rem;">
+              Translates complex telemetry patterns, DNA graphs, and neural decisions into clear, non-technical plain English.
+            </p>
+            
+            <!-- AI Compiler Status Indicator -->
+            <div id="ai-report-loader" style="display:none; text-align:center; padding: 2rem; border: 1px dashed var(--color-purple); border-radius: 8px; margin-top: 1.5rem; background: rgba(168,85,247,0.05);">
+              <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--color-purple);"></i>
+              <p style="margin-top:0.75rem; font-weight:bold; color:var(--text-main);">ATLAS AI Agent compiles telemetry vectors and model logs...</p>
+            </div>
+
+            <!-- Report Body -->
+            <div id="ai-report-body" style="margin-top: 1.5rem;">
+              <div class="alert-item" style="border-left-color: var(--color-blue); background-color: var(--color-blue-glow); padding: 1.5rem; border-radius:8px;">
+                <h3 style="color:var(--text-main); font-size: 1.1rem; margin-bottom: 0.75rem;"><i class="fa-solid fa-info-circle"></i> AI Posture: Operational & Secure</h3>
+                <p style="font-size:0.9rem; line-height:1.5; color:var(--text-secondary);">
+                  No active incidents are currently affecting the network. The pipeline has successfully analyzed all ingestion events on your endpoints. The baseline is clean and the IOC databases are updated.
+                </p>
+                <div style="margin-top: 1.2rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.8rem;">
+                  <strong style="color:var(--text-main); font-size:0.85rem;">Recommendations:</strong>
+                  <ul style="font-size:0.85rem; color:var(--text-secondary); margin-left: 1.2rem; margin-top:0.4rem; line-height:1.4;">
+                    <li>Keep auto-mitigation checks active.</li>
+                    <li>Continue regular threat feeds updates (CISA KEV, MalwareBazaar).</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: VISUALIZATIONS & RISK FACTOR PROVENANCE -->
+          <div style="display:flex; flex-direction:column; gap:1rem;">
+            
+            <!-- Card 1: Interactive Risk Factor Doughnut Chart -->
+            <div class="card">
+              <div class="card-title"><i class="fa-solid fa-chart-pie"></i> Risk Factor Distribution</div>
+              <p class="text-secondary" style="font-size:0.8rem; margin-top:0.25rem;">Visual breakdown of confidence components contributing to the overall threat posture.</p>
+              <div style="height:210px; margin-top:1rem; display:flex; align-items:center; justify-content:center;">
+                <canvas id="ai-report-pie-canvas" width="200" height="200"></canvas>
+              </div>
+            </div>
+
+            <!-- Card 2: Risk Factor Weight Breakdown List -->
+            <div class="card">
+              <div class="card-title" style="font-size:0.88rem;"><i class="fa-solid fa-layer-group" style="color:var(--color-orange);"></i> Contributing Factor Weights</div>
+              <p class="text-secondary" style="font-size:0.75rem; margin-top:0.2rem; margin-bottom:0.75rem;">Weight decomposition of behavioral vectors and telemetry observations.</p>
+              <div id="ai-report-factors-list" style="display:flex; flex-direction:column; gap:0.5rem;">
+                <!-- Dynamically loaded -->
+              </div>
+            </div>
+
+            <!-- Card 3: CCF Confidence Calibration Breakdown -->
+            <div class="card" style="background:rgba(0,229,255,0.03); border:1px solid rgba(0,229,255,0.2);">
+              <div class="card-title" style="font-size:0.88rem; color:var(--color-cyan);"><i class="fa-solid fa-calculator"></i> CCF Mathematical Calibration</div>
+              <div id="ai-report-ccf-box" style="margin-top:0.5rem; font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">
+                <!-- Dynamically loaded -->
+              </div>
+            </div>
+
+            <!-- Card 4: Quick Action Bar -->
+            <div class="card" style="padding:0.75rem 1rem;">
+              <div style="display:flex; gap:0.5rem; justify-content:space-between; align-items:center;">
+                <span id="copy-toast-msg" style="display:none; font-size:0.75rem; color:var(--color-green); font-weight:700;"><i class="fa-solid fa-check"></i> Copied!</span>
+                <button class="def-btn secondary" id="btn-copy-report" style="font-size:0.78rem; padding:0.4rem 0.8rem;" onclick="copyExecutiveReportText()"><i class="fa-solid fa-copy"></i> Copy Text</button>
+                <button class="def-btn" id="btn-export-pdf" style="font-size:0.78rem; padding:0.4rem 0.8rem;" onclick="exportExecutiveReportPdf()"><i class="fa-solid fa-file-pdf"></i> Export PDF</button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Phase 9: Compliance & Forensics Reports Grid -->
+        <div class="card" style="margin-top: 1.5rem;">
+          <div class="card-title"><i class="fa-solid fa-file-invoice"></i> Phase 9: Compliance & Forensics Report Center</div>
+          <p class="text-secondary" style="font-size:0.85rem; margin-top:0.25rem; margin-bottom:1rem;">Generate structured export audits matching global industry frameworks.</p>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
+            <div style="background-color:rgba(0,0,0,0.15); border:1px solid var(--border-color); padding:0.8rem; border-radius:8px;">
+              <div style="font-weight:700; color:var(--text-primary); font-size:0.82rem;"><i class="fa-solid fa-building-shield"></i> Executive Audit Summary</div>
+              <div style="font-size:0.68rem; color:var(--text-muted); margin-top:3px; line-height:1.3;">High-level overview suitable for C-suite risk reviews and board presentations.</div>
+              <button class="pill-badge info" style="border:none; cursor:pointer; margin-top:8px; font-weight:700; display:inline-flex; align-items:center; gap:4px;" onclick="downloadExecutiveSummaryPdf()"><i class="fa-solid fa-file-pdf"></i> Download PDF</button>
+            </div>
+            <div style="background-color:rgba(0,0,0,0.15); border:1px solid var(--border-color); padding:0.8rem; border-radius:8px;">
+              <div style="font-weight:700; color:var(--text-primary); font-size:0.82rem;"><i class="fa-solid fa-microscope"></i> Detailed Malware Forensics</div>
+              <div style="font-size:0.68rem; color:var(--text-muted); margin-top:3px; line-height:1.3;">Detailed execution logs, registry diffs, process tree states, and memory maps.</div>
+              <button class="pill-badge info" style="border:none; cursor:pointer; margin-top:8px; font-weight:700; display:inline-flex; align-items:center; gap:4px;" onclick="downloadForensicsJson()"><i class="fa-solid fa-file-code"></i> Download JSON</button>
+            </div>
+            <div style="background-color:rgba(0,0,0,0.15); border:1px solid var(--border-color); padding:0.8rem; border-radius:8px;">
+              <div style="font-weight:700; color:var(--text-primary); font-size:0.82rem;"><i class="fa-solid fa-scale-balanced"></i> NIST CSF / ISO 27001 Audit</div>
+              <div style="font-size:0.68rem; color:var(--text-muted); margin-top:3px; line-height:1.3;">Maps the detected incident response timeline to ISO-27001 and NIST security controls.</div>
+              <button class="pill-badge info" style="border:none; cursor:pointer; margin-top:8px; font-weight:700; display:inline-flex; align-items:center; gap:4px;" onclick="downloadNistAuditPdf()"><i class="fa-solid fa-file-contract"></i> Download PDF</button>
+            </div>
+            <div style="background-color:rgba(0,0,0,0.15); border:1px solid var(--border-color); padding:0.8rem; border-radius:8px;">
+              <div style="font-weight:700; color:var(--text-primary); font-size:0.82rem;"><i class="fa-solid fa-share-nodes"></i> STIX 2.1 Threat Intel Package</div>
+              <div style="font-size:0.68rem; color:var(--text-muted); margin-top:3px; line-height:1.3;">Standardized cyber threat intelligence package for sharing with MISP/OpenCTI.</div>
+              <button class="pill-badge info" style="border:none; cursor:pointer; margin-top:8px; font-weight:700; display:inline-flex; align-items:center; gap:4px;" onclick="downloadStix21Package()"><i class="fa-solid fa-network-wired"></i> Download STIX</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: SETTINGS & CENTRAL CONTROL PLANE -->
+      <div class="tab-content" id="tab-settings">
+        <div style="display:grid; grid-template-columns: 260px 1fr; gap: 1.5rem; align-items: start;">
+          
+          <!-- LEFT SETTINGS NAV & EMERGENCY CONTROLS -->
+          <div style="display:flex; flex-direction:column; gap:1rem;">
+            
+            <!-- System Control Banner -->
+            <div class="card" style="padding:1rem;">
+              <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:700; margin-bottom:0.4rem;">
+                Control Plane Node
+              </div>
+              <div style="font-size:0.95rem; font-weight:800; color:var(--color-cyan); display:flex; align-items:center; gap:0.4rem;" id="settings-hud-instance-name">
+                <i class="fa-solid fa-server"></i> ATLAS-CORE-PROD-01
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; font-size:0.72rem;">
+                <span style="color:var(--text-secondary);">Environment:</span>
+                <span class="pill-badge info" id="settings-hud-env-badge" style="font-size:0.65rem; padding:0.15rem 0.4rem;">Production</span>
+              </div>
+            </div>
+
+            <!-- Emergency Global Kill Switch -->
+            <div class="kill-switch-box" id="settings-kill-switch-card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                <span style="font-weight:800; font-size:0.8rem; color:var(--color-red); display:flex; align-items:center; gap:0.4rem;">
+                  <i class="fa-solid fa-skull-crossbones"></i> DEFENCE KILL SWITCH
+                </span>
+                <span class="kill-switch-badge" id="settings-kill-switch-status-badge">DISENGAGED</span>
+              </div>
+              <p style="font-size:0.68rem; color:var(--text-muted); line-height:1.3; margin-bottom:0.75rem;">
+                Immediately inhibits all automated host isolation, process kills, and firewall modifications while preserving passive monitoring.
+              </p>
+              <button id="btn-toggle-kill-switch" class="def-btn danger" style="width:100%; font-size:0.75rem;" onclick="toggleDefenceKillSwitch()">
+                <i class="fa-solid fa-skull-crossbones"></i> Engage Emergency Kill Switch
+              </button>
+            </div>
+
+            <!-- Settings Sub-Navigation Menu -->
+            <div class="card" style="padding:0.5rem; display:flex; flex-direction:column; gap:2px;">
+              <div class="settings-subnav-btn active" data-subtab="general" onclick="switchSettingsSubTab('general')">
+                <i class="fa-solid fa-gear"></i> General Settings
+              </div>
+              <div class="settings-subnav-btn" data-subtab="telemetry" onclick="switchSettingsSubTab('telemetry')">
+                <i class="fa-solid fa-satellite-dish"></i> Telemetry & Collectors
+              </div>
+              <div class="settings-subnav-btn" data-subtab="detection" onclick="switchSettingsSubTab('detection')">
+                <i class="fa-solid fa-crosshairs"></i> Detection & Threat Intel
+              </div>
+              <div class="settings-subnav-btn" data-subtab="campaigns" onclick="switchSettingsSubTab('campaigns')">
+                <i class="fa-solid fa-diagram-project"></i> Campaign Intelligence
+              </div>
+              <div class="settings-subnav-btn" data-subtab="ai" onclick="switchSettingsSubTab('ai')">
+                <i class="fa-solid fa-brain"></i> AI & Neural Engine
+              </div>
+              <div class="settings-subnav-btn" data-subtab="defence" onclick="switchSettingsSubTab('defence')">
+                <i class="fa-solid fa-shield-halved"></i> Defence & Playbooks
+              </div>
+              <div class="settings-subnav-btn" data-subtab="data" onclick="switchSettingsSubTab('data')">
+                <i class="fa-solid fa-database"></i> Data & Retention
+              </div>
+              <div class="settings-subnav-btn" data-subtab="notifications" onclick="switchSettingsSubTab('notifications')">
+                <i class="fa-solid fa-bell"></i> Notifications & Alerts
+              </div>
+              <div class="settings-subnav-btn" data-subtab="rbac" onclick="switchSettingsSubTab('rbac')">
+                <i class="fa-solid fa-users-gear"></i> RBAC & Security
+              </div>
+              <div class="settings-subnav-btn" data-subtab="integrations" onclick="switchSettingsSubTab('integrations')">
+                <i class="fa-solid fa-network-wired"></i> Integrations & Feeds
+              </div>
+              <div class="settings-subnav-btn" data-subtab="health" onclick="switchSettingsSubTab('health')">
+                <i class="fa-solid fa-heart-pulse"></i> System Health & Metrics
+              </div>
+              <div class="settings-subnav-btn" data-subtab="audit" onclick="switchSettingsSubTab('audit')">
+                <i class="fa-solid fa-clock-rotate-left"></i> Change History & Audit
+              </div>
+            </div>
+
+            <!-- Quick Action Controls -->
+            <div class="card" style="padding:0.75rem; display:flex; flex-direction:column; gap:0.45rem;">
+              <button class="def-btn" id="btn-save-all-settings" style="width:100%; font-size:0.75rem;" onclick="saveCurrentSettingsTab()">
+                <i class="fa-solid fa-floppy-disk"></i> Save Changes
+              </button>
+              <button class="def-btn secondary" id="btn-reset-tab-settings" style="width:100%; font-size:0.72rem;" onclick="resetCurrentSettingsTab()">
+                <i class="fa-solid fa-rotate-left"></i> Restore Defaults
+              </button>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.45rem; margin-top:0.2rem;">
+                <button class="def-btn secondary" style="font-size:0.7rem; padding:0.45rem 0.6rem;" onclick="exportSettingsJson()"><i class="fa-solid fa-download"></i> Export</button>
+                <button class="def-btn secondary" style="font-size:0.7rem; padding:0.45rem 0.6rem;" onclick="triggerImportSettings()"><i class="fa-solid fa-upload"></i> Import</button>
+                <input type="file" id="settings-import-file" style="display:none;" accept=".json" onchange="handleSettingsImportFile(event)">
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT SETTINGS CONTENT VIEWPORT -->
+          <div class="card" id="settings-panel-container" style="min-height: 650px; padding: 1.5rem;">
+            <div style="display:flex; justify-content:center; align-items:center; height:300px; color:var(--text-muted);">
+              <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB: TPOT HONEYPOT -->
+      <div class="tab-content" id="tab-tpot">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div class="card-title" style="margin-bottom:0;"><i class="fa-solid fa-spider"></i> T-Pot Honeypot Capture & System Protection Console</div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem;">
+            <span id="tpot-source-mode-badge" class="pill-badge info" style="font-size:0.68rem; font-weight:700;"><i class="fa-solid fa-vial"></i> SCENARIO / SIMULATION</span>
+            <span id="tpot-protection-mode-badge" class="pill-badge warning" style="font-size:0.68rem; font-weight:700;"><i class="fa-solid fa-shield-cat"></i> MONITORING ONLY</span>
+          </div>
+        </div>
+
+        <!-- 1. DEDICATED SENSOR & NETWORK PROTECTION COVERAGE BAR -->
+        <div class="card" style="background:rgba(15,23,42,0.6); border-color:var(--border-color); padding:1rem; margin-bottom:1.25rem;">
+          <div style="font-size:0.85rem; font-weight:700; color:var(--text-primary); margin-bottom:0.75rem; border-bottom:1px solid var(--border-color); padding-bottom:0.4rem; display:flex; justify-content:space-between;">
+            <span><i class="fa-solid fa-network-wired"></i> T-Pot Sensor & Network Protection Status</span>
+            <span style="font-size:0.72rem; color:var(--text-muted);">Read-Only System Monitoring Architecture</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+            <!-- State 1: T-Pot Sensor -->
+            <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); padding:0.6rem 0.8rem; border-radius:6px;">
+              <div style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:0.25rem;">T-Pot Sensor State</div>
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <span id="lbl-tpot-sensor-status" style="font-weight:700; color:var(--color-green); font-size:0.85rem;"><i class="fa-solid fa-circle"></i> CONNECTED</span>
+                <span class="pill-badge success" style="font-size:0.62rem;">PORT 5080</span>
+              </div>
+            </div>
+
+            <!-- State 2: Telemetry Ingestion -->
+            <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); padding:0.6rem 0.8rem; border-radius:6px;">
+              <div style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:0.25rem;">Telemetry Ingestion Pipeline</div>
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <span id="lbl-tpot-telemetry-status" style="font-weight:700; color:var(--color-green); font-size:0.85rem;"><i class="fa-solid fa-heart-pulse"></i> HEALTHY</span>
+                <span id="lbl-tpot-last-event" style="font-size:0.65rem; color:var(--text-muted);">Just now</span>
+              </div>
+            </div>
+
+            <!-- State 3: Host Firewall Integration -->
+            <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); padding:0.6rem 0.8rem; border-radius:6px;">
+              <div style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:0.25rem;">Host Firewall Integration</div>
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <span id="lbl-tpot-firewall-status" style="font-weight:700; color:var(--color-green); font-size:0.85rem;"><i class="fa-solid fa-shield"></i> CONNECTED</span>
+                <span class="pill-badge info" style="font-size:0.62rem;">READ-ONLY</span>
+              </div>
+            </div>
+
+            <!-- State 4: Protection Mode -->
+            <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); padding:0.6rem 0.8rem; border-radius:6px;">
+              <div style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:0.25rem;">Derived Protection Mode</div>
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <span id="lbl-tpot-protection-mode" style="font-weight:700; color:var(--color-cyan); font-size:0.82rem;">MONITORING + FW INTEGRATION</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. ACTIVE HONEYPOT SENSORS GRID -->
+        <div class="card" style="margin-bottom:1.25rem; padding:0.85rem;">
+          <div style="font-size:0.82rem; font-weight:700; color:var(--text-primary); margin-bottom:0.6rem;"><i class="fa-solid fa-cubes-stacked"></i> Active Verified Honeypot Sensors</div>
+          <div id="tpot-active-sensors-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:0.75rem;">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- 3. MAIN WORKFLOW GRID: Live Events Feed & Firewall Containment -->
+        <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap:1.25rem; margin-bottom:1.25rem;">
+          
+          <!-- Left Column: Live T-Pot Event Feed -->
+          <div class="card" style="padding:0.85rem;">
+            <div class="card-title" style="font-size:0.85rem; margin-bottom:0.6rem; display:flex; justify-content:space-between; align-items:center;">
+              <span><i class="fa-solid fa-bell"></i> Live T-Pot Event Capture Feed</span>
+              <span id="lbl-tpot-events-count" class="pill-badge info" style="font-size:0.65rem;">0 Events</span>
+            </div>
+            <div style="overflow-x:auto; max-height:300px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:0.72rem; text-align:left;">
+                <thead>
+                  <tr style="border-bottom:1px solid var(--border-color); color:var(--text-muted);">
+                    <th style="padding:0.4rem;">Time</th>
+                    <th style="padding:0.4rem;">Mode</th>
+                    <th style="padding:0.4rem;">Honeypot</th>
+                    <th style="padding:0.4rem;">Attacker IP</th>
+                    <th style="padding:0.4rem;">Port</th>
+                    <th style="padding:0.4rem;">Event Type</th>
+                    <th style="padding:0.4rem;">Severity</th>
+                  </tr>
+                </thead>
+                <tbody id="tpot-alerts-tbody">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Right Column: Host Firewall Status & Rule Containment -->
+          <div class="card" style="padding:0.85rem;">
+            <div class="card-title" style="font-size:0.85rem; margin-bottom:0.6rem; display:flex; justify-content:space-between; align-items:center;">
+              <span><i class="fa-solid fa-firewall"></i> Windows Defender Firewall Rules & Gate</span>
+              <span id="tpot-firewall-profiles" class="pill-badge success" style="font-size:0.62rem;">DOM / PRIV / PUB ON</span>
+            </div>
+            <div style="overflow-x:auto; max-height:300px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:0.72rem; text-align:left;">
+                <thead>
+                  <tr style="border-bottom:1px solid var(--border-color); color:var(--text-muted);">
+                    <th style="padding:0.4rem;">Target IP</th>
+                    <th style="padding:0.4rem;">Firewall Status</th>
+                    <th style="padding:0.4rem; text-align:center;">Analyst Gate</th>
+                  </tr>
+                </thead>
+                <tbody id="tpot-blocks-tbody">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 4. CORRELATED ATTACK SESSIONS TIMELINE VIEW -->
+        <div class="card" style="padding:0.85rem;">
+          <div class="card-title" style="font-size:0.85rem; margin-bottom:0.6rem; display:flex; justify-content:space-between;">
+            <span><i class="fa-solid fa-timeline"></i> Correlated Attack Sessions & Multi-Stage Timelines</span>
+            <span id="lbl-tpot-sessions-count" style="font-size:0.72rem; color:var(--text-secondary);">0 Active Sessions</span>
+          </div>
+          <div id="tpot-sessions-container" style="font-size:0.75rem;">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+      </div>
+
+  <!-- TELEMETRY SINGLE EVENT DETAIL MODAL -->
+  <div id="telemetry-event-modal" class="modal-overlay hidden">
+    <div class="card" style="width:820px; max-width:92vw; max-height:88vh; overflow-y:auto; background:var(--bg-card); border:1px solid var(--border-color); padding:1.25rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:0.6rem; margin-bottom:1rem;">
+        <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"><i class="fa-solid fa-satellite-dish"></i> Endpoint Telemetry Event Investigation</div>
+        <button id="telemetry-event-modal-close" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="telemetry-event-modal-body" style="font-size:0.8rem; display:flex; flex-direction:column; gap:1rem;">
+        <!-- Populated dynamically via viewTelemetryEventDetail() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- TPOT SINGLE EVENT DETAIL MODAL -->
+  <div id="tpot-event-modal" class="modal-overlay hidden">
+    <div class="card" style="width:780px; max-width:92vw; max-height:88vh; overflow-y:auto; background:var(--bg-card); border:1px solid var(--border-color); padding:1.25rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:0.6rem; margin-bottom:1rem;">
+        <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"><i class="fa-solid fa-file-code"></i> T-Pot Event Telemetry Breakdown</div>
+        <button id="tpot-event-modal-close" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="tpot-event-modal-body" style="font-size:0.8rem; display:flex; flex-direction:column; gap:1rem;">
+        <!-- Populated dynamically via viewEventDetail() -->
+      </div>
+    </div>
+  </div>
+  <div id="tpot-session-modal" class="modal-overlay hidden">
+    <div class="card" style="width:850px; max-width:92vw; max-height:88vh; overflow-y:auto; background:var(--bg-card); border:1px solid var(--border-color); padding:1.25rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:0.6rem; margin-bottom:1rem;">
+        <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"><i class="fa-solid fa-timeline"></i> T-Pot Attack Session Provenance & Evidence Detail</div>
+        <button id="tpot-session-modal-close" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="tpot-session-modal-body" style="font-size:0.8rem; display:flex; flex-direction:column; gap:1rem;">
+        <!-- Populated dynamically via GET /api/tpot/sessions/:id -->
+      </div>
+    </div>
+  </div>
+  <div id="smart-scan-modal" class="modal-overlay hidden">
+    <div class="smart-scan-card">
+      <button class="modal-close-btn" id="smart-scan-close" title="Close" onclick="closeSmartScanModal()"><i class="fa-solid fa-xmark"></i></button>
+      
+      <div class="smart-scan-header">
+        <div class="scan-icon-pulse"><i class="fa-solid fa-shield-halved"></i></div>
+        <h2>SMART SYSTEM SCAN</h2>
+        <p id="smart-scan-subtitle">ATLAS is checking your system</p>
+      </div>
+
+      <div class="scan-progress-wrapper">
+        <div class="scan-progress-bar">
+          <div class="scan-progress-fill" id="smart-scan-fill"></div>
+        </div>
+        <span class="scan-progress-percent" id="smart-scan-percent">0%</span>
+      </div>
+
+      <div class="scan-modules-checklist">
+        <div class="scan-module-item" id="mod-health">
+          <span class="mod-name"><i class="fa-solid fa-laptop-medical"></i> System Health</span>
+          <span class="mod-status status-pending"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+        </div>
+        <div class="scan-module-item" id="mod-endpoint">
+          <span class="mod-name"><i class="fa-solid fa-shield-cat"></i> Endpoint Protection</span>
+          <span class="mod-status status-pending"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+        </div>
+        <div class="scan-module-item" id="mod-network">
+          <span class="mod-name"><i class="fa-solid fa-network-wired"></i> Network Protection</span>
+          <span class="mod-status status-pending"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+        </div>
+        <div class="scan-module-item" id="mod-behavior">
+          <span class="mod-name"><i class="fa-solid fa-dna"></i> Behavioral Protection</span>
+          <span class="mod-status status-pending"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+        </div>
+        <div class="scan-module-item" id="mod-intel">
+          <span class="mod-name"><i class="fa-solid fa-globe"></i> Threat Intelligence</span>
+          <span class="mod-status status-pending"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+        </div>
+        <div class="scan-module-item" id="mod-ransomware">
+          <span class="mod-name"><i class="fa-solid fa-lock"></i> Ransomware Protection</span>
+          <span class="mod-status status-pending"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+        </div>
+        <div class="scan-module-item" id="mod-ai">
+          <span class="mod-name"><i class="fa-solid fa-brain"></i> ATLAS AI Analysis</span>
+          <span class="mod-status status-pending"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+        </div>
+      </div>
+
+      <div class="scan-summary-bar">
+        <div class="sum-stat"><span id="scan-stat-events">2,138</span> events analyzed</div>
+        <div class="sum-stat-divider">|</div>
+        <div class="sum-stat"><span id="scan-stat-threats">0</span> active threats</div>
+        <div class="sum-stat-divider">|</div>
+        <div class="sum-stat">Risk: <span id="scan-stat-risk" class="risk-pill low">LOW</span></div>
+      </div>
+
+      <div class="scan-actions">
+        <button id="btn-smart-scan-details" class="btn-view-details" onclick="toggleSmartScanDetails()">
+          <i class="fa-solid fa-list-check"></i> VIEW DETAILS
+        </button>
+      </div>
+
+      <!-- Modular Details Drawer -->
+      <div id="smart-scan-details-drawer" class="details-drawer hidden">
+        <h4>Modular Security Engine Breakdown</h4>
+        <div class="drawer-grid">
+          <div class="drawer-card" data-navigate="telemetry">
+            <h5><i class="fa-solid fa-server"></i> System Health & Telemetry</h5>
+            <p>Active process monitoring & memory RSS health verified.</p>
+            <span class="card-link">Inspect Telemetry &rarr;</span>
+          </div>
+          <div class="drawer-card" data-navigate="threats">
+            <h5><i class="fa-solid fa-shield-virus"></i> Endpoint Protection</h5>
+            <p>WinTrust code-signing & AMSI RAM script scanner clean.</p>
+            <span class="card-link">Inspect Endpoints &rarr;</span>
+          </div>
+          <div class="drawer-card" data-navigate="tpot">
+            <h5><i class="fa-solid fa-network-wired"></i> Network Protection</h5>
+            <p>Active socket filtering & host firewall playbooks active.</p>
+            <span class="card-link">Inspect Firewall &rarr;</span>
+          </div>
+          <div class="drawer-card" data-navigate="investigation">
+            <h5><i class="fa-solid fa-dna"></i> Behavioral Protection</h5>
+            <p>128D d-BEF embedding graph constructed & verified.</p>
+            <span class="card-link">Inspect Behavior Graph &rarr;</span>
+          </div>
+          <div class="drawer-card" data-navigate="kb">
+            <h5><i class="fa-solid fa-globe"></i> Threat Intelligence</h5>
+            <p>CISA KEV, MalwareBazaar & URLhaus threat feeds matched.</p>
+            <span class="card-link">Inspect Knowledge Base &rarr;</span>
+          </div>
+          <div class="drawer-card" data-navigate="playbooks">
+            <h5><i class="fa-solid fa-lock"></i> Ransomware Protection</h5>
+            <p>Decoy canary traps active. VSS snapshots verified.</p>
+            <span class="card-link">Inspect Ransomware Traps &rarr;</span>
+          </div>
+          <div class="drawer-card" data-navigate="ai-report">
+            <h5><i class="fa-solid fa-brain"></i> ATLAS AI Analysis</h5>
+            <p>RF+SVM+MLP+GNN ensemble & CCF confidence verified.</p>
+            <span class="card-link">Inspect AI Report &rarr;</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Evidence Drawer Modal for Analytics Forensics -->
+      <div id="analytics-evidence-modal" class="details-drawer hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:80%; max-width:850px; max-height:85vh; overflow-y:auto; z-index:9999; background:#0f172a; border:1px solid var(--color-cyan); box-shadow:0 0 25px rgba(0,229,255,0.25); border-radius:8px; padding:1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.75rem; margin-bottom:1rem;">
+          <div style="font-size:1rem; font-weight:700; color:var(--color-cyan);"><i class="fa-solid fa-microscope"></i> Forensic Evidence Inspector</div>
+          <button class="btn btn-secondary" style="font-size:0.75rem; padding:0.25rem 0.6rem;" onclick="closeEvidenceModal()"><i class="fa-solid fa-xmark"></i> Close</button>
+        </div>
+        
+        <div id="analytics-evidence-modal-body" style="font-size:0.78rem; color:var(--text-primary);">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div style="margin-top:1.25rem; border-top:1px solid rgba(255,255,255,0.08); padding-top:0.8rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+          <span style="font-size:0.72rem; color:var(--text-secondary);">Cross-Module Forensic Navigation:</span>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-secondary" style="font-size:0.7rem; padding:0.3rem 0.6rem;" onclick="navigateToTab('telemetry'); closeEvidenceModal();"><i class="fa-solid fa-server"></i> Telemetry</button>
+            <button class="btn btn-secondary" style="font-size:0.7rem; padding:0.3rem 0.6rem;" onclick="navigateToTab('threats'); closeEvidenceModal();"><i class="fa-solid fa-shield-virus"></i> Threats</button>
+            <button class="btn btn-secondary" style="font-size:0.7rem; padding:0.3rem 0.6rem;" onclick="navigateToTab('investigation'); closeEvidenceModal();"><i class="fa-solid fa-dna"></i> Investigation</button>
+            <button class="btn btn-secondary" style="font-size:0.7rem; padding:0.3rem 0.6rem;" onclick="navigateToTab('campaigns'); closeEvidenceModal();"><i class="fa-solid fa-network-wired"></i> Campaigns</button>
+            <button class="btn btn-secondary" style="font-size:0.7rem; padding:0.3rem 0.6rem;" onclick="navigateToTab('playbooks'); closeEvidenceModal();"><i class="fa-solid fa-hand-fist"></i> Playbooks</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="app.js?v=2.5.4"></script>
+</body>
+</html>

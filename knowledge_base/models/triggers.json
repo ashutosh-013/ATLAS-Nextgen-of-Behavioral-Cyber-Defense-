@@ -1,0 +1,28 @@
+{
+  "triggers": {
+    "kb_growth": {
+      "trigger_type": "kb_growth",
+      "threshold_value": 100,
+      "current_value": 1,
+      "triggered": false,
+      "trigger_timestamp": null
+    },
+    "performance_degradation": {
+      "trigger_type": "performance_degradation",
+      "threshold_value": 0.05,
+      "current_value": 0.48913043478260865,
+      "triggered": false,
+      "trigger_timestamp": null
+    },
+    "manual": {
+      "trigger_type": "manual",
+      "threshold_value": 1,
+      "current_value": 0,
+      "triggered": false,
+      "trigger_timestamp": null
+    }
+  },
+  "metadata": {
+    "last_updated": "2026-07-25T12:09:12.013389"
+  }
+}

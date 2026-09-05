@@ -1,0 +1,22 @@
+# Quantum Computing Dependencies for BADNA Quantum Optimization Layer
+
+# Core Qiskit
+qiskit>=0.45.0
+qiskit-aer>=0.13.0
+qiskit-ibm-runtime>=0.15.0
+
+# Quantum algorithms
+qiskit-algorithms>=0.2.0
+qiskit-machine-learning>=0.7.0
+
+# Optimization
+qiskit-optimization>=0.5.0
+
+# Visualization (optional)
+qiskit-visualization>=0.1.0
+matplotlib>=3.5.0
+
+# Scientific computing (already in main requirements)
+numpy>=1.21.0
+scipy>=1.7.0
+scikit-learn>=1.0.0

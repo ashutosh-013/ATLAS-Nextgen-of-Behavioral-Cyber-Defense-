@@ -1,0 +1,24 @@
+# ATLAS Behavioral Cyber-Intelligence Platform
+# Core Production Dependencies
+
+# Web Application & Dashboard
+flask>=2.3.0
+werkzeug>=2.3.0
+
+# OS Diagnostics & Telemetry Ingestion
+psutil>=5.9.0
+
+# Machine Learning, Graph Behavioral Modeling & CCF Math
+numpy>=1.24.0
+scipy>=1.10.0
+scikit-learn>=1.2.0
+torch>=2.0.0
+networkx>=3.0
+
+# Security, Threat Intel & Feeds
+requests>=2.28.0
+pyyaml>=6.0
+cryptography>=41.0.0
+
+# Quality Assurance & Testing
+pytest>=7.3.0

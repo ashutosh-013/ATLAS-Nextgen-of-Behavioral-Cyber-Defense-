@@ -1,0 +1,53 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.class
+*.so
+
+# Databases & Large State Files (GitHub 100MB limit)
+*.db
+*.db-journal
+*.db.bak
+atlas_state.db
+
+# Large Datasets & Model Dumps (Do not push to Git)
+datasets/
+backups/
+output/
+demo_output/
+test_kb/
+test_logs/
+scratch/
+temp/
+tmp/
+*.tmp
+*.pkl
+*.parquet
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Logs
+*.log
+logs/
+
+# IDE / Editor artifacts
+.vscode/
+.idea/
+.pytest_cache/
+.hypothesis/
+.kiro/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini

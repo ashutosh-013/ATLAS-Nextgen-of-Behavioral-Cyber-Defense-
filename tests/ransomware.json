@@ -1,0 +1,55 @@
+[
+  {
+    "event_type": "process",
+    "timestamp": "2024-07-04T14:15:00",
+    "source_system": "EDR",
+    "event_data": {
+      "pid": 1337,
+      "action": "create",
+      "name": "encrypt.exe",
+      "command": "encrypt.exe --recursive --target C:\\Users"
+    }
+  },
+  {
+    "event_type": "file",
+    "timestamp": "2024-07-04T14:15:30",
+    "source_system": "File Monitor",
+    "event_data": {
+      "path": "C:\\Users\\Documents\\important.docx",
+      "action": "encrypt",
+      "original_size": 2048,
+      "encrypted_size": 2560
+    }
+  },
+  {
+    "event_type": "file",
+    "timestamp": "2024-07-04T14:16:00",
+    "source_system": "File Monitor",
+    "event_data": {
+      "path": "C:\\Users\\Desktop\\README_RANSOM.txt",
+      "action": "write",
+      "content": "Your files are encrypted. Pay Bitcoin to recover."
+    }
+  },
+  {
+    "event_type": "registry",
+    "timestamp": "2024-07-04T14:16:15",
+    "source_system": "EDR",
+    "event_data": {
+      "key_path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      "action": "modify",
+      "value": "ransom_note.exe"
+    }
+  },
+  {
+    "event_type": "network",
+    "timestamp": "2024-07-04T14:17:00",
+    "source_system": "Firewall",
+    "event_data": {
+      "action": "http",
+      "url": "http://darkweb-payment.onion/payment",
+      "method": "POST",
+      "protocol": "TOR"
+    }
+  }
+]

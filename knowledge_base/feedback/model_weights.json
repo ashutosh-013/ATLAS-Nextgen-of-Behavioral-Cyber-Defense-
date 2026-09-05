@@ -1,0 +1,9 @@
+{
+  "weights": {
+    "similarity_weight": 1.0,
+    "novelty_weight": 1.79585632602213,
+    "confidence_weight": 1.327684820223719,
+    "feature_weights": {}
+  },
+  "last_updated": "2026-08-16T00:28:07.304741"
+}

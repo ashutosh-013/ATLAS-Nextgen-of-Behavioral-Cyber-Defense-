@@ -1,0 +1,898 @@
+{
+  "feedback_history": {
+    "test-123": [
+      {
+        "feedback_id": "50b5dc48-06ea-4dcf-8e95-9229ba5eac1b",
+        "profile_id": "test-123",
+        "feedback_type": "true_positive",
+        "analyst_id": "test-analyst",
+        "timestamp": "2026-07-04T00:57:31.982441",
+        "analyst_notes": null,
+        "corrected_label": null
+      }
+    ],
+    "integration-test": [
+      {
+        "feedback_id": "14ffe23c-f770-4a54-98a0-ab6da9f0e721",
+        "profile_id": "integration-test",
+        "feedback_type": "false_positive",
+        "analyst_id": "test",
+        "timestamp": "2026-07-04T00:58:04.967113",
+        "analyst_notes": null,
+        "corrected_label": null
+      }
+    ],
+    "demo-profile-001": [
+      {
+        "feedback_id": "ee7893dc-98f3-443e-9d80-0f7d461e7fad",
+        "profile_id": "demo-profile-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "security-analyst-1",
+        "timestamp": "2026-07-04T10:49:54.945125",
+        "analyst_notes": "Confirmed APT attack using lateral movement techniques",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "d43e5b2e-4223-46e9-ac55-a7133759de0c",
+        "profile_id": "demo-profile-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "security-analyst-1",
+        "timestamp": "2026-07-04T00:59:06.626786",
+        "analyst_notes": "Confirmed APT attack using lateral movement techniques",
+        "corrected_label": null
+      }
+    ],
+    "demo-profile-002": [
+      {
+        "feedback_id": "f652cab3-c1b3-4774-9293-d99def7d9ec0",
+        "profile_id": "demo-profile-002",
+        "feedback_type": "false_positive",
+        "analyst_id": "security-analyst-2",
+        "timestamp": "2026-07-04T10:49:54.950669",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "83d75b46-e95e-4a7a-9ffd-3f110d1b688d",
+        "profile_id": "demo-profile-002",
+        "feedback_type": "false_positive",
+        "analyst_id": "security-analyst-2",
+        "timestamp": "2026-07-04T00:59:06.642360",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      }
+    ],
+    "demo-profile-003": [
+      {
+        "feedback_id": "fe82dd53-3ee0-42f8-952b-74452f7c81fa",
+        "profile_id": "demo-profile-003",
+        "feedback_type": "false_negative",
+        "analyst_id": "security-analyst-1",
+        "timestamp": "2026-07-04T10:49:54.955866",
+        "analyst_notes": "Missed ransomware attack with new encryption pattern",
+        "corrected_label": "Ransomware"
+      },
+      {
+        "feedback_id": "55f00e39-a4b2-4629-9c11-dd1b2c9f5dd1",
+        "profile_id": "demo-profile-003",
+        "feedback_type": "false_negative",
+        "analyst_id": "security-analyst-1",
+        "timestamp": "2026-07-04T00:59:06.653170",
+        "analyst_notes": "Missed ransomware attack with new encryption pattern",
+        "corrected_label": "Ransomware"
+      }
+    ],
+    "workflow-true_positive-apt": [
+      {
+        "feedback_id": "4ad0f535-85bf-4e96-8867-8094b6a4af47",
+        "profile_id": "workflow-true_positive-apt",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo-analyst",
+        "timestamp": "2026-07-04T10:49:54.999761",
+        "analyst_notes": "Confirmed advanced persistent threat",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "af9fe128-e323-4b3f-8b7a-8e018735ddb1",
+        "profile_id": "workflow-true_positive-apt",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo-analyst",
+        "timestamp": "2026-07-04T00:59:06.721683",
+        "analyst_notes": "Confirmed advanced persistent threat",
+        "corrected_label": null
+      }
+    ],
+    "workflow-false_positive-benign": [
+      {
+        "feedback_id": "f945811a-b8d6-4501-b4f3-c62ab438e40c",
+        "profile_id": "workflow-false_positive-benign",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo-analyst",
+        "timestamp": "2026-07-04T10:49:55.009303",
+        "analyst_notes": "Normal user behavior",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "25e9764f-39f8-46b5-b701-08c672012a84",
+        "profile_id": "workflow-false_positive-benign",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo-analyst",
+        "timestamp": "2026-07-04T00:59:06.726207",
+        "analyst_notes": "Normal user behavior",
+        "corrected_label": null
+      }
+    ],
+    "workflow-false_negative-malware": [
+      {
+        "feedback_id": "8ed0d368-9a8b-4d84-b4fb-7b0e514f615a",
+        "profile_id": "workflow-false_negative-malware",
+        "feedback_type": "false_negative",
+        "analyst_id": "demo-analyst",
+        "timestamp": "2026-07-04T10:49:55.017023",
+        "analyst_notes": "Missed malware detection",
+        "corrected_label": "Malware"
+      },
+      {
+        "feedback_id": "cfcb5d76-4770-476b-8790-fe7ea7784a42",
+        "profile_id": "workflow-false_negative-malware",
+        "feedback_type": "false_negative",
+        "analyst_id": "demo-analyst",
+        "timestamp": "2026-07-04T00:59:06.737892",
+        "analyst_notes": "Missed malware detection",
+        "corrected_label": "Malware"
+      }
+    ],
+    "workflow-true_positive-ransomware": [
+      {
+        "feedback_id": "56064522-67ad-44f1-98b9-8438c261edf7",
+        "profile_id": "workflow-true_positive-ransomware",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo-analyst",
+        "timestamp": "2026-07-04T10:49:55.029385",
+        "analyst_notes": "Confirmed ransomware attack",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "e2f66552-8e38-4837-b080-d9d380acb938",
+        "profile_id": "workflow-true_positive-ransomware",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo-analyst",
+        "timestamp": "2026-07-04T00:59:06.753767",
+        "analyst_notes": "Confirmed ransomware attack",
+        "corrected_label": null
+      }
+    ],
+    "demo-apt-001": [
+      {
+        "feedback_id": "a730cf51-4537-4f96-8860-e906dc046f88",
+        "profile_id": "demo-apt-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-08-16T00:28:07.260791",
+        "analyst_notes": "Confirmed APT attack with lateral movement",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "5598ca5c-0fd3-40b2-be81-99d73acc5019",
+        "profile_id": "demo-apt-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-12T13:01:04.720583",
+        "analyst_notes": "Confirmed APT attack with lateral movement",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "ce8925d9-6aea-4621-b773-182609f3ad21",
+        "profile_id": "demo-apt-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T23:20:04.667364",
+        "analyst_notes": "Confirmed APT attack with lateral movement",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "6a5aece4-6a27-4530-b465-e6b485dbc384",
+        "profile_id": "demo-apt-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T15:16:02.147464",
+        "analyst_notes": "Confirmed APT attack with lateral movement",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "6bd35472-cac2-4b87-9a5f-d76a40b27e43",
+        "profile_id": "demo-apt-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T14:46:01.502788",
+        "analyst_notes": "Confirmed APT attack with lateral movement",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "b443eec9-d160-468b-b978-4d5426fc6cd3",
+        "profile_id": "demo-apt-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T14:41:44.182093",
+        "analyst_notes": "Confirmed APT attack with lateral movement",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "2658754b-a8bc-4bd8-902e-2a2076f4a5f9",
+        "profile_id": "demo-apt-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T12:25:01.068823",
+        "analyst_notes": "Confirmed APT attack with lateral movement",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "ce7d44c1-7348-4b43-8713-6329e6f4ee63",
+        "profile_id": "demo-apt-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T12:53:54.008394",
+        "analyst_notes": "Confirmed APT attack with lateral movement",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "01d5334d-fd1d-4e77-b14d-85a62cf8d5d1",
+        "profile_id": "demo-apt-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T12:01:37.635274",
+        "analyst_notes": "Confirmed APT attack with lateral movement",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "ac9d65c9-fec4-4dc2-a69f-9939b5d314b7",
+        "profile_id": "demo-apt-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T11:46:05.122922",
+        "analyst_notes": "Confirmed APT attack with lateral movement",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "fc8ca08c-f122-45bc-944e-5184517efe7f",
+        "profile_id": "demo-apt-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T11:45:24.340934",
+        "analyst_notes": "Confirmed APT attack with lateral movement",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "c7929820-beef-4cd5-a280-109b18e16d1b",
+        "profile_id": "demo-apt-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T11:44:53.957332",
+        "analyst_notes": "Confirmed APT attack with lateral movement",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "75942342-adf7-4f93-b51d-fe73387e9f66",
+        "profile_id": "demo-apt-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T11:39:04.460992",
+        "analyst_notes": "Confirmed APT attack with lateral movement",
+        "corrected_label": null
+      }
+    ],
+    "demo-ransomware-001": [
+      {
+        "feedback_id": "83ac086c-e8ce-4c3e-8bb9-3749307e7181",
+        "profile_id": "demo-ransomware-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-08-16T00:28:07.276406",
+        "analyst_notes": "Confirmed ransomware with file encryption",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "b0a52346-6c8e-4e4a-aa40-b9b7ffee5bd6",
+        "profile_id": "demo-ransomware-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-12T13:01:04.734278",
+        "analyst_notes": "Confirmed ransomware with file encryption",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "189aeac6-001e-4737-9a10-554a7801dd16",
+        "profile_id": "demo-ransomware-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T23:20:04.720521",
+        "analyst_notes": "Confirmed ransomware with file encryption",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "9fdf449d-c309-4995-a7bb-469cbace71f1",
+        "profile_id": "demo-ransomware-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T15:16:02.154606",
+        "analyst_notes": "Confirmed ransomware with file encryption",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "55e4e17f-9fd6-48b4-b833-b62f44147241",
+        "profile_id": "demo-ransomware-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T14:46:01.520715",
+        "analyst_notes": "Confirmed ransomware with file encryption",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "af7e2afc-827f-46d7-803e-fa415bbae792",
+        "profile_id": "demo-ransomware-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T14:41:44.198674",
+        "analyst_notes": "Confirmed ransomware with file encryption",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "75cbaaf2-402f-4fbc-bab6-de59cbf31d9e",
+        "profile_id": "demo-ransomware-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T12:25:01.085425",
+        "analyst_notes": "Confirmed ransomware with file encryption",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "6a95bd38-b2e9-4585-92b0-d44ad16310d4",
+        "profile_id": "demo-ransomware-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T12:53:54.065420",
+        "analyst_notes": "Confirmed ransomware with file encryption",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "810c10fd-fe11-4af8-86f7-443c04791bcd",
+        "profile_id": "demo-ransomware-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T12:01:37.644021",
+        "analyst_notes": "Confirmed ransomware with file encryption",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "aa947e4a-dbd6-49e1-8a5e-bf31fc106cea",
+        "profile_id": "demo-ransomware-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T11:46:05.130145",
+        "analyst_notes": "Confirmed ransomware with file encryption",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "abb7d08b-4486-4546-9651-b4475b141d43",
+        "profile_id": "demo-ransomware-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T11:45:24.348048",
+        "analyst_notes": "Confirmed ransomware with file encryption",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "2c7461e7-8c72-4746-9794-bb88ac6d17bb",
+        "profile_id": "demo-ransomware-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T11:44:53.965078",
+        "analyst_notes": "Confirmed ransomware with file encryption",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "f81b6095-b827-4c60-9e49-8dd0a6fd8262",
+        "profile_id": "demo-ransomware-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T11:39:04.707204",
+        "analyst_notes": "Confirmed ransomware with file encryption",
+        "corrected_label": null
+      }
+    ],
+    "demo-benign-001": [
+      {
+        "feedback_id": "4c10b992-f48f-4f4e-8e65-c9c580cae103",
+        "profile_id": "demo-benign-001",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-08-16T00:28:07.295734",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "6f84fd0e-a317-4044-9d9f-d9af054b1c2a",
+        "profile_id": "demo-benign-001",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-12T13:01:04.746678",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "5316025c-7393-4431-8a1a-2fb773a72098",
+        "profile_id": "demo-benign-001",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T23:20:04.754577",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "2d2eb126-66cc-4776-a8d6-fe95462c8025",
+        "profile_id": "demo-benign-001",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T15:16:02.164945",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "acb14cf7-64b4-4b85-92b7-38c15e7584f5",
+        "profile_id": "demo-benign-001",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T14:46:01.535610",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "1dd24b1d-4042-4cf8-92e0-e594466d6a0e",
+        "profile_id": "demo-benign-001",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T14:41:44.211044",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "a9ff42d3-13a7-40f1-8932-a70b47895624",
+        "profile_id": "demo-benign-001",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-06T12:25:01.096811",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "5b089ac8-5328-493f-8562-dddfaf83b45b",
+        "profile_id": "demo-benign-001",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T12:53:54.126194",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "705ba010-05ba-473d-9642-2964d61432f2",
+        "profile_id": "demo-benign-001",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T12:01:37.656998",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "9d350225-620b-43bd-877c-b25af53035cb",
+        "profile_id": "demo-benign-001",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T11:46:05.138203",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "9bb3cf0f-4d29-41c5-b8c6-0153e6c148c3",
+        "profile_id": "demo-benign-001",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T11:45:24.357024",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "e2734122-a13f-4c28-a01f-e0b42b80db1d",
+        "profile_id": "demo-benign-001",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T11:44:53.974371",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "04d281db-1c00-426a-b7d3-35cfaeeb7477",
+        "profile_id": "demo-benign-001",
+        "feedback_type": "false_positive",
+        "analyst_id": "demo_analyst",
+        "timestamp": "2026-07-04T11:39:04.823353",
+        "analyst_notes": "Normal admin activity, not malicious",
+        "corrected_label": null
+      }
+    ],
+    "test-profile-001": [
+      {
+        "feedback_id": "660aee78-afda-4a05-ba4b-cc6570a2b43f",
+        "profile_id": "test-profile-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "analyst-test",
+        "timestamp": "2026-07-25T12:09:07.873433",
+        "analyst_notes": "Test feedback for validation",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "66445338-3bc6-4d6e-b6cb-7c80a9d4c978",
+        "profile_id": "test-profile-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "analyst-test",
+        "timestamp": "2026-07-25T10:44:22.883865",
+        "analyst_notes": "Test feedback for validation",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "75ae4e50-721d-4255-84b2-6204c679a763",
+        "profile_id": "test-profile-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "analyst-test",
+        "timestamp": "2026-07-20T13:15:10.188582",
+        "analyst_notes": "Test feedback for validation",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "bf6381f0-e340-4ac9-85fb-30e8a518309b",
+        "profile_id": "test-profile-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "analyst-test",
+        "timestamp": "2026-07-20T12:12:31.334848",
+        "analyst_notes": "Test feedback for validation",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "491cbc7c-f4bb-4972-8a20-c0de37d53ecb",
+        "profile_id": "test-profile-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "analyst-test",
+        "timestamp": "2026-07-14T14:42:28.209887",
+        "analyst_notes": "Test feedback for validation",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "38da29b5-f3bc-41c0-a838-47f993c19fc1",
+        "profile_id": "test-profile-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "analyst-test",
+        "timestamp": "2026-07-06T15:12:40.212417",
+        "analyst_notes": "Test feedback for validation",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "4b07e1e3-f733-413e-b711-99f0dbcb3dcf",
+        "profile_id": "test-profile-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "analyst-test",
+        "timestamp": "2026-07-06T14:34:24.418972",
+        "analyst_notes": "Test feedback for validation",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "c00de135-1e6c-4d01-b99f-501d619419b4",
+        "profile_id": "test-profile-001",
+        "feedback_type": "true_positive",
+        "analyst_id": "analyst-test",
+        "timestamp": "2026-07-06T12:24:43.615178",
+        "analyst_notes": "Test feedback for validation",
+        "corrected_label": null
+      }
+    ],
+    "test-integration-002": [
+      {
+        "feedback_id": "7d9062a4-e2ab-4e6c-8e6f-c14e7292cb10",
+        "profile_id": "test-integration-002",
+        "feedback_type": "false_positive",
+        "analyst_id": "analyst-integration",
+        "timestamp": "2026-07-25T12:09:08.237286",
+        "analyst_notes": "Integration test feedback",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "7baa401b-d0a8-416f-a02f-e998b526fcfc",
+        "profile_id": "test-integration-002",
+        "feedback_type": "false_positive",
+        "analyst_id": "analyst-integration",
+        "timestamp": "2026-07-25T10:44:22.909169",
+        "analyst_notes": "Integration test feedback",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "2e68fde0-7a95-4720-8081-099654f4f264",
+        "profile_id": "test-integration-002",
+        "feedback_type": "false_positive",
+        "analyst_id": "analyst-integration",
+        "timestamp": "2026-07-20T13:15:10.335938",
+        "analyst_notes": "Integration test feedback",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "74f9c9d2-7dfc-414e-8b5a-317d402a6747",
+        "profile_id": "test-integration-002",
+        "feedback_type": "false_positive",
+        "analyst_id": "analyst-integration",
+        "timestamp": "2026-07-20T12:12:31.464525",
+        "analyst_notes": "Integration test feedback",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "f149f677-147c-4977-89e9-cc137c251063",
+        "profile_id": "test-integration-002",
+        "feedback_type": "false_positive",
+        "analyst_id": "analyst-integration",
+        "timestamp": "2026-07-14T14:42:28.396069",
+        "analyst_notes": "Integration test feedback",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "9f6de4b4-3e00-44f7-9634-f5820ad3038f",
+        "profile_id": "test-integration-002",
+        "feedback_type": "false_positive",
+        "analyst_id": "analyst-integration",
+        "timestamp": "2026-07-06T15:12:40.252955",
+        "analyst_notes": "Integration test feedback",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "794f4a41-5a2a-4b82-80a4-492de5b15433",
+        "profile_id": "test-integration-002",
+        "feedback_type": "false_positive",
+        "analyst_id": "analyst-integration",
+        "timestamp": "2026-07-06T14:34:24.480712",
+        "analyst_notes": "Integration test feedback",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "7fdc1486-11f9-4a01-bf59-02036cf7eb5b",
+        "profile_id": "test-integration-002",
+        "feedback_type": "false_positive",
+        "analyst_id": "analyst-integration",
+        "timestamp": "2026-07-06T12:24:43.644558",
+        "analyst_notes": "Integration test feedback",
+        "corrected_label": null
+      }
+    ],
+    "integration-true_positive-0": [
+      {
+        "feedback_id": "edff7a25-5992-44d4-9536-9d09d4eaab0d",
+        "profile_id": "integration-true_positive-0",
+        "feedback_type": "true_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-25T12:09:09.895472",
+        "analyst_notes": "Confirmed advanced persistent threat",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "911f1232-dc13-4ea8-a803-c9062a048522",
+        "profile_id": "integration-true_positive-0",
+        "feedback_type": "true_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-25T10:44:24.058672",
+        "analyst_notes": "Confirmed advanced persistent threat",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "76b8aa68-1ad2-4eee-87a0-e17181216edf",
+        "profile_id": "integration-true_positive-0",
+        "feedback_type": "true_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-20T13:15:12.778551",
+        "analyst_notes": "Confirmed advanced persistent threat",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "d70f94a2-e454-417b-88c7-9a7acd4f1ac5",
+        "profile_id": "integration-true_positive-0",
+        "feedback_type": "true_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-20T12:12:33.046780",
+        "analyst_notes": "Confirmed advanced persistent threat",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "c3b32ea0-68f3-48af-b6a0-48d161487169",
+        "profile_id": "integration-true_positive-0",
+        "feedback_type": "true_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-14T14:42:33.441455",
+        "analyst_notes": "Confirmed advanced persistent threat",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "a8510f2c-44b5-4473-aba7-459cbde74bdd",
+        "profile_id": "integration-true_positive-0",
+        "feedback_type": "true_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-06T15:12:40.273227",
+        "analyst_notes": "Confirmed advanced persistent threat",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "070a3a19-2140-43da-96f3-bd6a8abdfbcd",
+        "profile_id": "integration-true_positive-0",
+        "feedback_type": "true_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-06T14:34:24.681347",
+        "analyst_notes": "Confirmed advanced persistent threat",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "4f97dea8-49f0-44bf-81c5-b612b39142bb",
+        "profile_id": "integration-true_positive-0",
+        "feedback_type": "true_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-06T12:24:43.693673",
+        "analyst_notes": "Confirmed advanced persistent threat",
+        "corrected_label": null
+      }
+    ],
+    "integration-false_positive-1": [
+      {
+        "feedback_id": "8b2a74be-f530-4536-ba28-0d415970c29c",
+        "profile_id": "integration-false_positive-1",
+        "feedback_type": "false_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-25T12:09:10.508317",
+        "analyst_notes": "Actually benign user activity",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "86c41663-5c20-437b-8c22-ff44ff1f214a",
+        "profile_id": "integration-false_positive-1",
+        "feedback_type": "false_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-25T10:44:24.789342",
+        "analyst_notes": "Actually benign user activity",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "660034a5-6ca1-4acb-a2f4-3b79c6b6d79b",
+        "profile_id": "integration-false_positive-1",
+        "feedback_type": "false_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-20T13:15:13.928924",
+        "analyst_notes": "Actually benign user activity",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "56260af3-559d-42f0-adae-0545bff7074a",
+        "profile_id": "integration-false_positive-1",
+        "feedback_type": "false_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-20T12:12:33.968653",
+        "analyst_notes": "Actually benign user activity",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "75e5d884-e5bb-4bf1-a54d-a6ded2e0592d",
+        "profile_id": "integration-false_positive-1",
+        "feedback_type": "false_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-14T14:42:35.587729",
+        "analyst_notes": "Actually benign user activity",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "9f2f4fcf-9ab2-4971-b144-1b558cb194ee",
+        "profile_id": "integration-false_positive-1",
+        "feedback_type": "false_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-06T15:12:40.282444",
+        "analyst_notes": "Actually benign user activity",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "1f2bbf44-89bb-4746-b09a-40e200eeb07d",
+        "profile_id": "integration-false_positive-1",
+        "feedback_type": "false_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-06T14:34:24.741853",
+        "analyst_notes": "Actually benign user activity",
+        "corrected_label": null
+      },
+      {
+        "feedback_id": "ed855013-4397-478f-b168-a7e88a58ed2a",
+        "profile_id": "integration-false_positive-1",
+        "feedback_type": "false_positive",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-06T12:24:43.703549",
+        "analyst_notes": "Actually benign user activity",
+        "corrected_label": null
+      }
+    ],
+    "integration-false_negative-2": [
+      {
+        "feedback_id": "f6340fe6-37a9-43b1-a316-35b59803a979",
+        "profile_id": "integration-false_negative-2",
+        "feedback_type": "false_negative",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-25T12:09:11.161923",
+        "analyst_notes": "Missed malware detection",
+        "corrected_label": "Malware"
+      },
+      {
+        "feedback_id": "67bf2df4-ffc3-4fb1-8cc5-7b4fc7cf385c",
+        "profile_id": "integration-false_negative-2",
+        "feedback_type": "false_negative",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-25T10:44:25.678729",
+        "analyst_notes": "Missed malware detection",
+        "corrected_label": "Malware"
+      },
+      {
+        "feedback_id": "7c3a0168-235a-491c-a3f9-d44b6810d646",
+        "profile_id": "integration-false_negative-2",
+        "feedback_type": "false_negative",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-20T13:15:15.013481",
+        "analyst_notes": "Missed malware detection",
+        "corrected_label": "Malware"
+      },
+      {
+        "feedback_id": "7f191dc6-d51e-497b-9084-fe4a6ab7a8b1",
+        "profile_id": "integration-false_negative-2",
+        "feedback_type": "false_negative",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-20T12:12:34.774990",
+        "analyst_notes": "Missed malware detection",
+        "corrected_label": "Malware"
+      },
+      {
+        "feedback_id": "1e1fcd44-aef3-4d56-b04c-c3af061ec05e",
+        "profile_id": "integration-false_negative-2",
+        "feedback_type": "false_negative",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-14T14:42:37.659323",
+        "analyst_notes": "Missed malware detection",
+        "corrected_label": "Malware"
+      },
+      {
+        "feedback_id": "4fa10c4b-c2c2-4414-b86f-373de7821a9c",
+        "profile_id": "integration-false_negative-2",
+        "feedback_type": "false_negative",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-06T15:12:40.291788",
+        "analyst_notes": "Missed malware detection",
+        "corrected_label": "Malware"
+      },
+      {
+        "feedback_id": "fb775f7e-ff0f-4a0d-aef1-ccea69be7dc4",
+        "profile_id": "integration-false_negative-2",
+        "feedback_type": "false_negative",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-06T14:34:24.813806",
+        "analyst_notes": "Missed malware detection",
+        "corrected_label": "Malware"
+      },
+      {
+        "feedback_id": "c23ca0dd-3898-4108-84cc-e82b5ac7b622",
+        "profile_id": "integration-false_negative-2",
+        "feedback_type": "false_negative",
+        "analyst_id": "integration-analyst",
+        "timestamp": "2026-07-06T12:24:43.714716",
+        "analyst_notes": "Missed malware detection",
+        "corrected_label": "Malware"
+      }
+    ]
+  },
+  "metadata": {
+    "last_updated": "2026-08-16T00:28:07.298751",
+    "total_profiles": 17,
+    "total_feedback": 95
+  }
+}

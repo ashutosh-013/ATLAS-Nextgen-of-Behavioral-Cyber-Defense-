@@ -1,0 +1,34 @@
+[
+  {
+    "event_type": "auth",
+    "timestamp": "2024-07-04T11:00:00",
+    "source_system": "Domain Controller",
+    "event_data": {
+      "user": "admin_user",
+      "action": "login",
+      "source_ip": "192.168.1.25",
+      "status": "success"
+    }
+  },
+  {
+    "event_type": "process",
+    "timestamp": "2024-07-04T11:00:30",
+    "source_system": "EDR",
+    "event_data": {
+      "pid": 1024,
+      "action": "create",
+      "name": "cmd.exe",
+      "command": "cmd.exe /c dir C:\\Windows\\System32"
+    }
+  },
+  {
+    "event_type": "file",
+    "timestamp": "2024-07-04T11:01:00",
+    "source_system": "File Monitor",
+    "event_data": {
+      "path": "C:\\Admin\\logs\\maintenance.log",
+      "action": "write",
+      "size": 512
+    }
+  }
+]

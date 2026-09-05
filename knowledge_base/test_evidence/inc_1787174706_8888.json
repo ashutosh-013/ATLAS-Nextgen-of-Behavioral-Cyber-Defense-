@@ -1,0 +1,20 @@
+{
+  "incident_id": "inc_1787174706_8888",
+  "timestamp": "2026-08-20T02:55:06.232354",
+  "target_process": {
+    "name": "malicious.exe",
+    "pid": 8888,
+    "cmd": "test_attack"
+  },
+  "affected_files": [
+    "test_file.txt"
+  ],
+  "evidence_hashes": {},
+  "system_state": {
+    "os": "Windows",
+    "architecture": "64bit",
+    "python_version": "3.13.1",
+    "metadata": {}
+  },
+  "evidence_file_path": "knowledge_base/test_evidence\\inc_1787174706_8888.json"
+}

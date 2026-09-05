@@ -1,0 +1,68 @@
+[
+  {
+    "event_type": "auth",
+    "timestamp": "2024-07-04T09:30:00",
+    "source_system": "Domain Controller",
+    "event_data": {
+      "user": "service_account",
+      "action": "login",
+      "source_ip": "192.168.1.50",
+      "status": "success"
+    }
+  },
+  {
+    "event_type": "process",
+    "timestamp": "2024-07-04T09:30:15",
+    "source_system": "EDR",
+    "event_data": {
+      "pid": 2547,
+      "action": "create",
+      "name": "powershell.exe",
+      "command": "powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden"
+    }
+  },
+  {
+    "event_type": "network",
+    "timestamp": "2024-07-04T09:30:30",
+    "source_system": "Firewall",
+    "event_data": {
+      "action": "dns",
+      "domain": "temp-files.azureedge.net",
+      "ip": "192.168.1.50",
+      "protocol": "DNS"
+    }
+  },
+  {
+    "event_type": "auth",
+    "timestamp": "2024-07-04T09:31:00",
+    "source_system": "Domain Controller",
+    "event_data": {
+      "user": "service_account",
+      "action": "escalate",
+      "from_privilege": "user",
+      "to_privilege": "admin"
+    }
+  },
+  {
+    "event_type": "process",
+    "timestamp": "2024-07-04T09:31:30",
+    "source_system": "EDR",
+    "event_data": {
+      "pid": 2548,
+      "action": "create",
+      "name": "mimikatz.exe",
+      "command": "mimikatz.exe sekurlsa::logonpasswords"
+    }
+  },
+  {
+    "event_type": "network",
+    "timestamp": "2024-07-04T09:32:00",
+    "source_system": "Network Monitor",
+    "event_data": {
+      "action": "http",
+      "url": "http://192.168.1.100/admin/config",
+      "method": "POST",
+      "source_ip": "192.168.1.50"
+    }
+  }
+]

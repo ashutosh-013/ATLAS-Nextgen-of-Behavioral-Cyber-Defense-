@@ -1,0 +1,56 @@
+[
+  {
+    "event_type": "auth",
+    "timestamp": "2024-07-04T18:45:00",
+    "source_system": "VPN Gateway",
+    "event_data": {
+      "user": "employee_john",
+      "action": "login",
+      "source_ip": "203.0.113.50",
+      "location": "unusual_location"
+    }
+  },
+  {
+    "event_type": "file",
+    "timestamp": "2024-07-04T18:46:00",
+    "source_system": "DLP Agent",
+    "event_data": {
+      "path": "C:\\Confidential\\customer_database.xlsx",
+      "action": "read",
+      "user": "employee_john",
+      "size": 50000000
+    }
+  },
+  {
+    "event_type": "file",
+    "timestamp": "2024-07-04T18:47:30",
+    "source_system": "DLP Agent",
+    "event_data": {
+      "path": "C:\\Users\\john\\Downloads\\data_copy.zip",
+      "action": "write",
+      "size": 48000000,
+      "compression": "high"
+    }
+  },
+  {
+    "event_type": "network",
+    "timestamp": "2024-07-04T18:48:00",
+    "source_system": "Network Monitor",
+    "event_data": {
+      "action": "upload",
+      "destination": "personal-cloud-drive.com",
+      "size": 48000000,
+      "protocol": "HTTPS"
+    }
+  },
+  {
+    "event_type": "user",
+    "timestamp": "2024-07-04T18:50:00",
+    "source_system": "Endpoint Monitor",
+    "event_data": {
+      "action": "usb",
+      "device": "external_drive",
+      "operation": "connect"
+    }
+  }
+]
