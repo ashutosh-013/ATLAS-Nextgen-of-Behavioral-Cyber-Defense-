@@ -57,11 +57,12 @@ class KnowledgeBase:
         
         self.kb_path = Path(kb_path) if kb_path else kb_dir / "behavior_memory.json"
         self.campaigns_path = Path(campaigns_path) if campaigns_path else kb_dir / "campaigns.json"
-        self.ioc_matches_path = self.kb_path.parent / "ioc_matches.json"
         
-        # In-memory storage
+        # In-memory storage (Rule #3: Behavioral Knowledge Base strictly stores behavioral patterns,
+        # campaigns, feedback, and behavioral profiles. Atomic IOCs are stored in IOCRepository).
         self.patterns: Dict[str, BehaviorPattern] = {}
         self.campaigns: Dict[str, CampaignProfile] = {}
+        self.ioc_matches_path = self.kb_path.parent / "ioc_matches.json"
         self.ioc_matches: Dict[str, Dict[str, Any]] = {}
         
         # Phase 1: Fix the Foundation - Extended Storage structures

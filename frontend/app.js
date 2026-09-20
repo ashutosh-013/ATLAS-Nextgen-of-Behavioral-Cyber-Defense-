@@ -12,6 +12,16 @@ function escapeHtml(str) {
 }
 window.escapeHtml = escapeHtml;
 
+function navigateToTab(tabName) {
+  if (!tabName) return;
+  const tabBtn = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
+  if (tabBtn) {
+    tabBtn.click();
+  }
+}
+window.navigateToTab = navigateToTab;
+
+
 // --- SMART SYSTEM SCAN GLOBAL CONTROLLER ---
 let currentActiveScanId = null;
 let scanPollTimer = null;
@@ -338,7 +348,34 @@ function initAtlasPlatform() {
       console.log('[-] SSE EventSource not supported in environment.');
     }
   }
-  initRealtimeStream();
+  // --- UNIVERSAL DATA PROVENANCE BADGE CONTROLLER ---
+  function updateProvenanceBadge(mode) {
+    const badge = document.getElementById('provenance-badge');
+    if (!badge) return;
+    const m = (mode || 'LIVE_HOST').toUpperCase();
+    if (m === 'LIVE' || m === 'LIVE_HOST') {
+      badge.className = 'badge-provenance live';
+      badge.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> LIVE HOST';
+      badge.title = 'Universal Provenance: Live host telemetry via Windows collectors';
+    } else if (m === 'SCENARIO' || m === 'SCENARIO_REPLAY') {
+      badge.className = 'badge-provenance scenario';
+      badge.innerHTML = '<i class="fa-solid fa-flask"></i> SCENARIO REPLAY';
+      badge.title = 'Universal Provenance: Deterministic synthetic replay (Non-live simulation)';
+    } else if (m === 'TPOT') {
+      badge.className = 'badge-provenance tpot';
+      badge.innerHTML = '<i class="fa-solid fa-spider"></i> TPOT HONEYPOT';
+      badge.title = 'Universal Provenance: Isolated honeypot telemetry sensors';
+    } else if (m === 'DATASET' || m === 'DATASET_REPLAY') {
+      badge.className = 'badge-provenance dataset';
+      badge.innerHTML = '<i class="fa-solid fa-database"></i> DATASET REPLAY';
+      badge.title = 'Universal Provenance: Academic benchmark telemetry dataset';
+    } else {
+      badge.className = 'badge-provenance synthetic';
+      badge.innerHTML = `<i class="fa-solid fa-vial"></i> ${m}`;
+      badge.title = `Universal Provenance: ${m}`;
+    }
+  }
+  window.updateProvenanceBadge = updateProvenanceBadge;
 
   // --- SCENARIO DATASETS ---
   const scenarios = {
@@ -1178,6 +1215,9 @@ function initAtlasPlatform() {
         }
         document.getElementById('lbl-enrich-recommendation').textContent = primaryIoc.recommendation;
 
+        // Query dynamic Behavioral DNA Profiles correlated with this IOC
+        loadIocBehavioralDnaCorrelation(primaryIoc.ioc);
+
         // Render Evidence-Driven Response Actions
         if (actionsContainer) {
           let actionHtml = '';
@@ -1272,6 +1312,8 @@ function initAtlasPlatform() {
         // No IOC selected (Clean / Protected state)
         if (providerGrid) providerGrid.style.display = 'none';
         if (emptyNotice) emptyNotice.style.display = 'block';
+        const dnaPanel = document.getElementById('enrich-behavioral-dna-panel');
+        if (dnaPanel) dnaPanel.style.display = 'none';
 
         enrichTarget.textContent = 'None';
         if (enrichLifecycle) {
@@ -1427,9 +1469,53 @@ function initAtlasPlatform() {
     }
   }
 
+  // --- IOC BEHAVIORAL DNA CORRELATION (RULE 3 COMPLIANT) ---
+  async function loadIocBehavioralDnaCorrelation(iocVal) {
+    const dnaPanel = document.getElementById('enrich-behavioral-dna-panel');
+    const dnaList = document.getElementById('enrich-behavioral-dna-list');
+    if (!dnaPanel || !dnaList || !iocVal) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/ioc/behavior-correlation/${encodeURIComponent(iocVal)}`);
+      const data = await res.json();
+      if (data.success && data.correlated_profiles && data.correlated_profiles.length > 0) {
+        dnaPanel.style.display = 'block';
+        dnaList.innerHTML = data.correlated_profiles.map(p => `
+          <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(0,229,255,0.2); border-radius:6px; padding:0.6rem 0.8rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                <strong style="color:var(--color-cyan); font-size:0.78rem;">${escapeHtml(p.pattern_id)}</strong>
+                <span class="pill-badge ${p.classification === 'APT' ? 'error' : (p.classification === 'Ransomware' ? 'warning' : 'info')}" style="font-size:0.62rem;">${escapeHtml(p.classification)}</span>
+                <span style="font-size:0.68rem; color:var(--text-muted); font-family:monospace;">${escapeHtml((p.fingerprint || '').substring(0, 16))}...</span>
+              </div>
+              <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:2px;">
+                Campaign: <strong style="color:var(--text-primary);">${escapeHtml(p.campaign || 'Unassigned')}</strong> | Correlation: <span style="color:var(--color-green); font-weight:600;">${escapeHtml(p.matched_by || 'BEHAVIORAL_MATCH')}</span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.8rem;">
+              <div style="text-align:right; font-size:0.68rem;">
+                <div>BSF Sim: <strong style="color:var(--color-blue);">${p.bsf_similarity}%</strong></div>
+                <div>CCF Conf: <strong style="color:var(--color-green);">${Math.round((p.ccf_confidence || 0.85) * 100)}%</strong></div>
+              </div>
+              <button class="btn btn-secondary" style="font-size:0.68rem; padding:0.25rem 0.5rem;" onclick="navigateToTab('kb'); loadKbPatternsTable();">
+                <i class="fa-solid fa-microscope"></i> Inspect DNA
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        dnaPanel.style.display = 'none';
+      }
+    } catch (e) {
+      console.error("Error loading IOC behavioral correlation:", e);
+      dnaPanel.style.display = 'none';
+    }
+  }
+
   // --- LOAD SCENARIO FUNCTION ---
   function loadScenario(type) {
     state.scenarioType = type;
+    updateProvenanceBadge('SCENARIO_REPLAY');
     
     // Check if it is a dynamic profile ID
     if (!['benign', 'apt', 'ransomware', 'insider', 'unknown'].includes(type)) {
@@ -5158,6 +5244,10 @@ function initAtlasPlatform() {
         <div style="font-size:0.75rem; color:var(--text-secondary);">
           Telemetry records raw host observations. Unusual processes or localhost connections (${ev.ip_classification}) are <strong>NOT automatically declared malicious</strong>. Threat evaluation occurs in the BADNA Behavioral Analysis Layer.
         </div>
+        <button class="btn btn-primary" style="margin-top:0.75rem; font-size:0.75rem; padding:0.35rem 0.75rem;" onclick="inspectForensicEvidenceChain('${ev.event_id || eventId}')">
+          <i class="fa-solid fa-link"></i> Trace End-to-End Forensic Evidence Chain
+        </button>
+      </div>
       </div>
     `;
 
@@ -5715,18 +5805,65 @@ function initAtlasPlatform() {
   window.runPlaybookDryRun = async function() {
     if (!currentActivePlaybook) return;
     const box = document.getElementById('playbook-output-preview-box');
-    if (box) {
-      box.style.display = 'block';
-      box.textContent = "[...] Running non-mutating Dry Run simulation preview...";
-    }
+    const diffWrapper = document.getElementById('playbook-diff-preview-wrapper');
+    const cliEl = document.getElementById('playbook-diff-cli-commands');
+    const diffEl = document.getElementById('playbook-diff-unified-text');
+    const blastSummaryEl = document.getElementById('playbook-diff-blast-summary');
+    const safetyBadgeEl = document.getElementById('playbook-diff-safety-badge');
+
+    if (diffWrapper) diffWrapper.style.display = 'block';
+    if (cliEl) cliEl.textContent = '# Computing deterministic host state changes...';
+    if (diffEl) diffEl.textContent = '... analyzing blast radius and system state transitions ...';
 
     try {
       const res = await fetch(`${API_URL}/api/playbooks/${currentActivePlaybook.playbook_id}/dry-run`, { method: 'POST' });
       const data = await res.json();
-      if (data.success && box) {
-        box.textContent = `[+] DRY RUN PREVIEW COMPLETE\n\n` + JSON.stringify(data.dry_run, null, 2);
-        if (data.dry_run.actions) {
-          renderPlaybookActionsTable(data.dry_run.actions);
+      if (data.success && data.dry_run) {
+        const dry = data.dry_run;
+        const diff = dry.diff_preview || {};
+
+        if (diffWrapper) diffWrapper.style.display = 'block';
+
+        // 1. Format CLI commands
+        if (cliEl) {
+          const cmds = diff.cli_commands || [];
+          cliEl.innerHTML = cmds.length > 0 
+            ? cmds.map(c => `<span style="color:var(--color-cyan);">${escapeHtml(c)}</span>`).join('\n')
+            : `<span style="color:var(--text-muted);"># Non-destructive response actions previewed.</span>`;
+        }
+
+        // 2. Syntax-highlight unified diff
+        if (diffEl) {
+          const rawDiff = diff.unified_diff || '';
+          const colored = rawDiff.split('\n').map(line => {
+            if (line.startsWith('+')) {
+              return `<span style="color:#4ade80; font-weight:700;">${escapeHtml(line)}</span>`;
+            } else if (line.startsWith('-')) {
+              return `<span style="color:#f87171; font-weight:700;">${escapeHtml(line)}</span>`;
+            } else if (line.startsWith('@@') || line.startsWith('---') || line.startsWith('+++')) {
+              return `<span style="color:#94a3b8;">${escapeHtml(line)}</span>`;
+            }
+            return `<span>${escapeHtml(line)}</span>`;
+          }).join('\n');
+          diffEl.innerHTML = colored || '<span style="color:var(--text-muted);">No state diff generated</span>';
+        }
+
+        // 3. Blast Summary & Guardrails
+        if (blastSummaryEl) {
+          blastSummaryEl.textContent = diff.affected_summary || '0 Targets Affected';
+        }
+        if (safetyBadgeEl) {
+          const passed = diff.safety_passed !== false;
+          safetyBadgeEl.className = `pill-badge ${passed ? 'success' : 'error'}`;
+          safetyBadgeEl.textContent = passed ? 'GUARDRAILS PASSED' : 'PROTECTED PROCESS WARNING';
+        }
+
+        // Fallback sync
+        if (box) {
+          box.textContent = `[+] DRY RUN PREVIEW COMPLETE\n\n` + JSON.stringify(dry, null, 2);
+        }
+        if (dry.actions) {
+          renderPlaybookActionsTable(dry.actions);
         }
       }
     } catch (e) {
@@ -5927,7 +6064,8 @@ function initAtlasPlatform() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       const buckets = data.buckets || [];
-      if (buckets.length === 0) return;
+      const w = canvas.width;
+      const h = canvas.height;
 
       const getMetricVal = (b) => {
         if (metricType === 'threats') return b.threat_count || 0;
@@ -5940,9 +6078,15 @@ function initAtlasPlatform() {
         return b.total || 0;
       };
 
+      if (buckets.length === 0 || buckets.every(b => getMetricVal(b) === 0)) {
+        ctx.fillStyle = '#64748b';
+        ctx.font = '11px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('NO TELEMETRY DATA (0 Events Observed in Window)', w / 2, h / 2);
+        return;
+      }
+
       const maxVal = Math.max(...buckets.map(b => getMetricVal(b)), 5);
-      const w = canvas.width;
-      const h = canvas.height;
       const stepX = (w - 40) / (buckets.length - 1 || 1);
 
       // Draw background grid lines
@@ -6024,6 +6168,72 @@ function initAtlasPlatform() {
     }
   };
 
+  // Attack Story State & Filters
+  window.currentAttackStoryStages = [];
+  window.attackStoryFilterMode = 'ALL';
+
+  window.setStoryFilterMode = function(mode) {
+    window.attackStoryFilterMode = mode;
+    ['all', 'novel', 'observed', 'c2'].forEach(m => {
+      const b = document.getElementById(`btn-story-filter-${m}`);
+      if (b) b.classList.remove('active');
+    });
+    const map = { 'ALL': 'all', 'NOVELTY': 'novel', 'OBSERVED': 'observed', 'EXEC_C2': 'c2' };
+    const targetBtn = document.getElementById(`btn-story-filter-${map[mode] || 'all'}`);
+    if (targetBtn) targetBtn.classList.add('active');
+    applyAttackStoryFilter();
+  };
+
+  window.applyAttackStoryFilter = function() {
+    const input = document.getElementById('story-node-filter-input');
+    const query = input ? input.value.toLowerCase().trim() : '';
+    const mode = window.attackStoryFilterMode || 'ALL';
+    const stages = window.currentAttackStoryStages || [];
+    const countEl = document.getElementById('story-filter-match-count');
+
+    let matchCount = 0;
+    stages.forEach(s => {
+      const card = document.getElementById(`attack-stage-card-${s.stage_num}`);
+      if (!card) return;
+
+      const name = (s.stage_name || '').toLowerCase();
+      const desc = (s.description || '').toLowerCase();
+      const evId = ((s.evidence_ids && s.evidence_ids[0]) || '').toLowerCase();
+      const isObs = s.status === 'OBSERVED';
+
+      let modeMatch = true;
+      if (mode === 'OBSERVED') {
+        modeMatch = isObs;
+      } else if (mode === 'NOVELTY') {
+        modeMatch = isObs && (s.stage_num >= 4 || desc.includes('novel') || desc.includes('powershell') || desc.includes('unauthorized'));
+      } else if (mode === 'EXEC_C2') {
+        modeMatch = [2, 7, 8, 9, 10].includes(s.stage_num) || name.includes('execution') || name.includes('c2') || name.includes('command');
+      }
+
+      let queryMatch = true;
+      if (query) {
+        queryMatch = name.includes(query) || desc.includes(query) || evId.includes(query) || `stage ${s.stage_num}`.includes(query);
+      }
+
+      if (modeMatch && queryMatch) {
+        card.style.display = 'flex';
+        card.style.opacity = '1';
+        matchCount++;
+      } else {
+        if (query) {
+          card.style.display = 'none';
+        } else {
+          card.style.display = 'flex';
+          card.style.opacity = '0.22';
+        }
+      }
+    });
+
+    if (countEl) {
+      countEl.textContent = `(${matchCount}/${stages.length} stages)`;
+    }
+  };
+
   async function renderAnalyticsAttackStory(sourceMode) {
     const box = document.getElementById('analytics-attack-story-flow-box');
     if (!box) return;
@@ -6033,33 +6243,36 @@ function initAtlasPlatform() {
       const data = await res.json();
       if (!data.success || !data.stages || data.stages.length === 0) {
         box.innerHTML = `<div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.75rem;">No correlated campaign events available to reconstruct attack story.</div>`;
+        window.currentAttackStoryStages = [];
         return;
       }
 
       const stages = data.stages || [];
+      window.currentAttackStoryStages = stages;
       box.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+        <div style="display:flex; flex-direction:column; gap:0.5rem;" id="attack-story-cards-container">
           ${stages.map((s) => {
             const isObs = s.status === 'OBSERVED';
             const evId = (s.evidence_ids && s.evidence_ids.length > 0) ? s.evidence_ids[0] : '';
             return `
-              <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.8rem; background:rgba(255,255,255,${isObs ? '0.04' : '0.01'}); border-left:3px solid ${isObs ? 'var(--color-cyan)' : 'rgba(255,255,255,0.1)'}; border-radius:4px; cursor:${evId ? 'pointer' : 'default'};" onclick="${evId ? `inspectEvidenceDrawer('${evId}')` : ''}">
+              <div id="attack-stage-card-${s.stage_num}" style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.8rem; background:rgba(255,255,255,${isObs ? '0.04' : '0.01'}); border-left:3px solid ${isObs ? 'var(--color-cyan)' : 'rgba(255,255,255,0.1)'}; border-radius:4px; cursor:${evId ? 'pointer' : 'default'}; transition:all 0.2s ease;" onclick="${evId ? `inspectEvidenceDrawer('${evId}')` : ''}">
                 <div>
                   <div style="display:flex; align-items:center; gap:0.5rem;">
                     <span style="font-size:0.65rem; color:${isObs ? 'var(--color-cyan)' : 'var(--text-muted)'}; font-weight:700;">STAGE ${s.stage_num}: ${s.stage_name.toUpperCase()}</span>
                     <span class="pill-badge ${isObs ? 'success' : 'secondary'}" style="font-size:0.6rem;">${s.status}</span>
                   </div>
-                  <div style="font-size:0.75rem; color:var(--text-primary); margin-top:2px;">${s.description}</div>
+                  <div style="font-size:0.75rem; color:var(--text-primary); margin-top:2px;">${escapeHtml(s.description)}</div>
                 </div>
                 <div style="text-align:right;">
                   <span style="font-size:0.65rem; color:var(--text-muted);">${(s.timestamp || '').replace('T', ' ').substring(0, 19)}</span>
-                  ${evId ? `<div style="font-size:0.65rem; color:var(--color-cyan);"><i class="fa-solid fa-link"></i> ${evId}</div>` : ''}
+                  ${evId ? `<div style="font-size:0.65rem; color:var(--color-cyan);"><i class="fa-solid fa-link"></i> ${escapeHtml(evId)}</div>` : ''}
                 </div>
               </div>
             `;
           }).join('')}
         </div>
       `;
+      applyAttackStoryFilter();
     } catch (e) {
       console.error("Error rendering attack story:", e);
     }
@@ -6328,6 +6541,82 @@ function initAtlasPlatform() {
   window.closeEvidenceModal = function() {
     const modal = document.getElementById('analytics-evidence-modal');
     if (modal) modal.classList.add('hidden');
+  };
+
+  window.inspectForensicEvidenceChain = async function(rootId) {
+    const modal = document.getElementById('analytics-evidence-modal');
+    const modalBody = document.getElementById('analytics-evidence-modal-body');
+    if (!modal || !modalBody) return;
+
+    modalBody.innerHTML = `<div style="text-align:center; padding:2rem;"><i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem; color:var(--color-cyan);"></i><p style="margin-top:0.5rem;">Tracing relational forensic evidence chain for ${rootId}...</p></div>`;
+    modal.classList.remove('hidden');
+
+    try {
+      const res = await fetch(`${API_URL}/api/telemetry/evidence-chain/${encodeURIComponent(rootId)}`);
+      const data = await res.json();
+      if (!data.success) {
+        modalBody.innerHTML = `<div style="padding:1.5rem; color:var(--color-red); text-align:center;">Failed to trace evidence chain: ${data.error || 'Server error'}</div>`;
+        return;
+      }
+
+      const chain = data.evidence_chain || [];
+      const statusBadge = data.status === 'PROVEN_CHAIN' ? 'success' : (data.status === 'PARTIAL_CHAIN' ? 'warning' : 'secondary');
+
+      let provHtml = '<span style="color:var(--text-muted);">None attached</span>';
+      if (data.provenance) {
+        const p = data.provenance;
+        provHtml = `<span class="pill-badge info" style="font-size:0.65rem;">${p.source_type}</span> <span style="font-size:0.72rem; color:var(--text-secondary);">Collector: <strong>${p.collector}</strong> | Calibrated: <strong>${p.confidence_calibrated !== null && p.confidence_calibrated !== undefined ? (p.confidence_calibrated * 100).toFixed(1) + '%' : 'N/A'}</strong> (${p.calibration_method || 'CCF'})</span>`;
+      }
+
+      if (chain.length === 0) {
+        modalBody.innerHTML = `
+          <div style="background:rgba(0,0,0,0.3); padding:1.25rem; border-radius:6px; border:1px solid rgba(255,255,255,0.08); text-align:center;">
+            <div style="font-size:1.2rem; color:var(--color-orange); margin-bottom:0.5rem;"><i class="fa-solid fa-shield-halved"></i> INSUFFICIENT DATA</div>
+            <div style="font-family:'Fira Code', monospace; color:var(--color-cyan); margin-bottom:0.5rem;">Root ID: ${rootId}</div>
+            <p style="color:var(--text-secondary); font-size:0.75rem; max-width:550px; margin:0 auto;">
+              No linked downstream forensic stages found for this entity. ATLAS enforces a strict zero-fabrication standard: security evidence is never manufactured when empirical data is absent.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      modalBody.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:0.6rem 0.8rem; border-radius:6px; border:1px solid var(--border-color); margin-bottom:1rem;">
+          <div>
+            <span style="font-size:0.85rem; font-weight:700; color:var(--color-cyan); font-family:'Fira Code', monospace;">${rootId}</span>
+            <span class="pill-badge ${statusBadge}" style="font-size:0.65rem; margin-left:0.5rem;">${data.status}</span>
+          </div>
+          <div style="font-size:0.72rem; color:var(--text-secondary);">
+            Stages Completed: <strong>${data.stages_completed}</strong> | Evidence Count: <strong>${data.evidence_count}</strong>
+          </div>
+        </div>
+
+        <div style="background:rgba(0,0,0,0.2); padding:0.6rem 0.8rem; border-radius:6px; border:1px solid rgba(255,255,255,0.06); margin-bottom:1rem;">
+          <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:0.25rem;">UNIVERSAL DATA PROVENANCE:</div>
+          <div>${provHtml}</div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:0.6rem;">
+          ${chain.map((c, i) => {
+            return `
+              <div style="padding:0.75rem; background:rgba(255,255,255,0.02); border-left:3px solid var(--color-cyan); border-radius:0 6px 6px 0; border:1px solid rgba(255,255,255,0.05); border-left-width:3px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
+                  <span style="font-weight:700; font-size:0.75rem; color:var(--color-cyan);"><i class="fa-solid fa-circle-check" style="color:var(--color-green);"></i> STAGE ${i + 1}: ${c.stage}</span>
+                  <span class="pill-badge success" style="font-size:0.6rem;">${c.status || 'VERIFIED'}</span>
+                </div>
+                <div style="font-size:0.72rem; color:var(--text-primary);">
+                  ${c.details || c.action || c.classification || c.campaign_name || 'Verified step execution'}
+                </div>
+                ${c.timestamp ? `<div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">Timestamp: ${c.timestamp.replace('T', ' ').substring(0, 19)}</div>` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    } catch (e) {
+      modalBody.innerHTML = `<div style="padding:1rem; color:var(--color-red);">Error tracing forensic chain: ${e}</div>`;
+    }
   };
 
   // =========================================================================
@@ -7684,7 +7973,99 @@ function initAtlasPlatform() {
     setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 4000);
   }
 
-  // Start dynamic updates polling loops
+  // --- REAL-TIME SERVER-SENT EVENTS (SSE) LIVE TELEMETRY STREAM ---
+  let sseSource = null;
+  let sseReconnectTimer = null;
+
+  function initLiveEventStream() {
+    if (window.EventSource === undefined) {
+      console.warn("EventSource not supported by browser; falling back to standard interval polling.");
+      return;
+    }
+
+    const badge = document.getElementById('sse-stream-badge');
+    try {
+      if (sseSource) {
+        sseSource.close();
+      }
+
+      sseSource = new EventSource('/api/stream/events');
+
+      sseSource.onopen = function() {
+        if (badge) {
+          badge.style.background = 'rgba(16,185,129,0.15)';
+          badge.style.borderColor = 'var(--color-green)';
+          badge.style.color = 'var(--color-green)';
+          badge.innerHTML = `<i class="fa-solid fa-bolt fa-fade"></i> SSE LIVE`;
+        }
+      };
+
+      sseSource.onmessage = function(e) {
+        try {
+          if (!e.data) return;
+          const payload = JSON.parse(e.data);
+          const evtType = payload.event_type;
+
+          if (evtType === 'ping') return;
+
+          // Flash HUD dot green on real-time event push
+          const dot = document.getElementById('cctv-status-dot');
+          if (dot) {
+            dot.style.boxShadow = '0 0 15px var(--color-green)';
+            setTimeout(() => { dot.style.boxShadow = ''; }, 600);
+          }
+
+          // Instant refresh on backend events without waiting for polling
+          if (evtType === 'analysis_completed' || evtType === 'telemetry_event') {
+            pollHistoryAndStatus();
+            if (state.activeTab === 'dashboard') {
+              drawBehaviorGraph();
+            } else if (state.activeTab === 'analytics') {
+              loadAnalyticsData();
+            } else if (state.activeTab === 'threats') {
+              loadThreatsData();
+            }
+          } else if (evtType === 'threat_state_updated') {
+            if (payload.data) {
+              updateAuthoritativeThreatState(payload.data);
+            }
+          } else if (evtType === 'knowledge_pattern_validated') {
+            if (state.activeTab === 'kb') {
+              loadKbPatternsTable();
+            }
+          }
+        } catch (err) {
+          console.debug("SSE Parse notice:", err);
+        }
+      };
+
+      sseSource.onerror = function() {
+        if (badge) {
+          badge.style.background = 'rgba(245,158,11,0.15)';
+          badge.style.borderColor = 'var(--color-orange)';
+          badge.style.color = 'var(--color-orange)';
+          badge.innerHTML = `<i class="fa-solid fa-rotate fa-spin"></i> RECONNECTING`;
+        }
+        if (sseSource) {
+          sseSource.close();
+          sseSource = null;
+        }
+        if (!sseReconnectTimer) {
+          sseReconnectTimer = setTimeout(() => {
+            sseReconnectTimer = null;
+            initLiveEventStream();
+          }, 4000);
+        }
+      };
+    } catch (err) {
+      console.warn("SSE connection initialization failed:", err);
+    }
+  }
+
+  // Initialize SSE stream
+  initLiveEventStream();
+
+  // Background fallback polling loops
   setInterval(() => {
     pollHistoryAndStatus();
     if (state.activeTab === 'tpot') {

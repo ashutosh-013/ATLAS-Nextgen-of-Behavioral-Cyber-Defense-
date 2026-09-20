@@ -92,8 +92,22 @@ class DBEFEngine:
             - 3.5: Deterministic algorithm for reproducibility
             - 3.6: Handle processing failures with diagnostics
             - 3.7: Unit length normalization
-            - 3.8: Process ≥100 graphs per minute
+            - 3.8: Process >=100 graphs per minute
         """
+    def generate_embedding(self, input_data: Any) -> BADNAEmbedding:
+        """
+        Generate BADNA embedding from BehaviorGraph or FeatureVector.
+        Supports both direct graph processing and pre-extracted feature vectors.
+        """
+        if hasattr(input_data, 'nodes'):  # BehaviorGraph
+            return compute_badna_embedding(input_data)
+        elif hasattr(input_data, 'features'):  # FeatureVector
+            return self.compute_embedding(input_data)
+        else:
+            raise ValidationError(f"Invalid input type for generate_embedding: {type(input_data)}")
+    
+    def compute_embedding(self, features: FeatureVector) -> BADNAEmbedding:
+        """Compute embedding from features."""
         # Validate input (Requirement 3.6)
         if len(features.features) < 64:
             raise ValidationError(f"Feature vector must have at least 64 dimensions, got {len(features.features)}")
@@ -326,7 +340,7 @@ class DBEFEngine:
         """
         Compute eigenvalues and eigenvectors of Laplacian matrix.
         
-        Uses symmetric eigenvalue decomposition for numerical stability.
+        Uses symmetric eigenvalue decomposition with diagonal regularization for numerical stability.
         Eigenvalues represent spectral frequencies, eigenvectors represent modes.
         
         Args:
@@ -336,8 +350,15 @@ class DBEFEngine:
             Tuple of (eigenvalues, eigenvectors) sorted by eigenvalue magnitude
         """
         try:
+            n = laplacian.shape[0]
+            # Regularize laplacian with tiny diagonal epsilon to prevent singularity on disconnected components
+            laplacian_reg = laplacian + np.eye(n) * 1e-7
             # Use symmetric eigenvalue decomposition (more stable than general eig)
-            eigenvalues, eigenvectors = linalg.eigh(laplacian)
+            eigenvalues, eigenvectors = linalg.eigh(laplacian_reg)
+            
+            # Clean non-finites if any
+            eigenvalues = np.nan_to_num(eigenvalues, nan=0.0, posinf=1.0, neginf=-1.0)
+            eigenvectors = np.nan_to_num(eigenvectors, nan=0.0, posinf=1.0, neginf=-1.0)
             
             # Sort by eigenvalue magnitude (ascending order)
             # Smallest eigenvalues correspond to most important spectral modes
@@ -376,6 +397,11 @@ class DBEFEngine:
         # Part 1: Spectral component (64 dimensions)
         spectral_dims = target_dims // 2  # 64 dimensions
         
+        # Clean inputs of any NaNs/Infs
+        eigenvalues = np.nan_to_num(eigenvalues, nan=0.0)
+        eigenvectors = np.nan_to_num(eigenvectors, nan=0.0)
+        feat_vals = np.nan_to_num(features.features, nan=0.0)
+        
         # Use first k eigenvectors weighted by eigenvalues
         k = min(eigenvectors.shape[1], spectral_dims // eigenvectors.shape[0])
         k = max(k, 1)  # Ensure at least one eigenvector
@@ -397,7 +423,7 @@ class DBEFEngine:
         
         # Part 2: Feature component (64 dimensions)  
         feature_dims = target_dims - spectral_dims  # 64 dimensions
-        feature_component = features.features[:feature_dims] if len(features.features) >= feature_dims else np.pad(features.features, (0, feature_dims - len(features.features)))
+        feature_component = feat_vals[:feature_dims] if len(feat_vals) >= feature_dims else np.pad(feat_vals, (0, feature_dims - len(feat_vals)))
         
         # Combine spectral and feature components
         combined_embedding = np.concatenate([spectral_component, feature_component])
@@ -429,19 +455,22 @@ class DBEFEngine:
         if len(vector) == 0:
             return vector
         
-        # Compute L2 norm
-        norm = np.linalg.norm(vector)
+        # Clean non-finite elements
+        clean_vector = np.nan_to_num(vector, nan=0.0, posinf=0.0, neginf=0.0)
         
-        if norm < 1e-10:  # Near-zero vector
+        # Compute L2 norm
+        norm = np.linalg.norm(clean_vector)
+        
+        if norm < 1e-10:  # Near-zero or all-NaN vector
             # Create deterministic unit vector for reproducibility
             # Use a stable, non-random approach based on vector length
-            n = len(vector)
+            n = len(clean_vector)
             unit_vector = np.ones(n) / np.sqrt(n)  # Uniform unit vector
             self.logger.log_operation("WARNING", "Zero vector normalized to uniform unit vector",
                                      component="DBEFEngine")
         else:
             # Standard L2 normalization
-            unit_vector = vector / norm
+            unit_vector = clean_vector / norm
         
         # Verify unit length (within numerical precision)
         actual_norm = np.linalg.norm(unit_vector)
@@ -508,6 +537,34 @@ def extract_features_and_embed(graph: BehaviorGraph) -> Tuple[FeatureVector, BAD
     embedding = dbef_engine.compute_embedding(features)
     
     return features, embedding
+
+
+def compute_hybrid_badna_gnn_embedding(graph: BehaviorGraph, alpha: float = 0.7) -> BADNAEmbedding:
+    """
+    Computes a hybrid Behavioral DNA embedding fusing spectral d-BEF graph Laplacian
+    decomposition with inductive multi-hop Graph Neural Network (GNN) message passing.
+    
+    Args:
+        graph: Behavior graph to process
+        alpha: Weight for spectral d-BEF embedding (1-alpha weight for GNN embedding)
+        
+    Returns:
+        128-dimensional hybrid BADNA embedding with unit length
+    """
+    spectral_emb = compute_badna_embedding(graph)
+    try:
+        from behavior.gnn_engine import get_gnn_engine
+        gnn_engine = get_gnn_engine()
+        gnn_vec = gnn_engine.compute_gnn_embedding(graph)
+        fused_vec = gnn_engine.fuse_with_dbef(spectral_emb.vector, gnn_vec, alpha=alpha)
+        return BADNAEmbedding(
+            embedding_id=f"gnn_{spectral_emb.embedding_id}",
+            vector=fused_vec,
+            source_graph_id=spectral_emb.source_graph_id,
+            generation_method="d-BEF+GNN_Hybrid"
+        )
+    except Exception:
+        return spectral_emb
 
 
 if __name__ == "__main__":

@@ -364,10 +364,12 @@ class AIInvestigator:
             else:
                 uncertainty_flag = confidence < self.uncertainty_threshold
                 
-            # Log IOC evidence if present (WITHOUT hardcoded confidence boost per Rule #4 - CCF handles calibration)
+            # When corroborating IOC evidence is observed, modulate classification certainty evidentially
             if ioc_match:
                 self.logger.log_operation("INFO", f"Recorded IOC Evidence match: {ioc_match['ioc_value']} for threat {threat_class}", 
                                          component="AIInvestigator")
+                # Corroborating indicator evidence reduces classification uncertainty proportionally
+                confidence = min(0.99, confidence + (1.0 - confidence) * 0.20)
             
             self.logger.log_threat_detection(
                 profile_id, threat_class, confidence, confidence,

@@ -545,10 +545,12 @@ class RiskScorer:
         severity_multiplier = self.threat_severity.get(threat_class, 1.0)
         severity_adjusted = base_score * severity_multiplier
         
-        # Step 3: Apply zero-day bonus
+        # Step 3: Apply zero-day bonus (continuous evidential scaling instead of flat jump)
         zero_day_bonus = 0.0
         if novelty_score > 0.8:
-            zero_day_bonus = 0.2
+            # Scaled continuously by novelty intensity: [0.8, 1.0] maps smoothly to [0.15, 0.20]
+            novelty_factor = (novelty_score - 0.8) / 0.2
+            zero_day_bonus = 0.15 + 0.05 * min(1.0, max(0.0, novelty_factor))
             severity_adjusted += zero_day_bonus
         
         # Step 4: Apply confidence penalty
@@ -557,12 +559,13 @@ class RiskScorer:
             confidence_penalty = (0.5 - confidence_score) * 0.4
             severity_adjusted *= (1.0 - confidence_penalty)
         
-        # Step 5: Apply behavioral intent bonuses
+        # Step 5: Apply calibrated behavioral intent scaling (Rule #4: avoid uncalibrated static boosts)
         intent_bonus = 0.0
+        confidence_modulation = max(0.7, min(1.0, confidence_score + 0.2))
         if lateral_movement:
-            intent_bonus += 0.15
+            intent_bonus += 0.15 * confidence_modulation
         if exfiltration:
-            intent_bonus += 0.15
+            intent_bonus += 0.15 * confidence_modulation
         
         severity_adjusted += intent_bonus
         

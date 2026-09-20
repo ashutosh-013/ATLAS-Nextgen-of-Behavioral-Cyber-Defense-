@@ -165,6 +165,9 @@ class NSFEngine:
         if vector.shape != (128,):
             raise ValidationError("Input vector must be 128-dimensional")
         
+        # Clean non-finites
+        vector = np.nan_to_num(vector, nan=0.0, posinf=0.0, neginf=0.0)
+        
         # Handle empty knowledge base
         if not hasattr(knowledge_base, 'get_patterns') or not knowledge_base.get_patterns():
             return NoveltyResult(
@@ -397,8 +400,14 @@ class NSFEngine:
             neighbor_vectors = [nn[2] for nn in nearest_neighbors]
             all_vectors = [vector] + neighbor_vectors
             
+            k = min(len(neighbor_vectors), self.k_neighbors)
+            # Scikit-learn LOF requires n_samples > n_neighbors
+            # If candidate set is too small, fall back directly to nearest-neighbor distance
+            if len(all_vectors) <= k or len(all_vectors) < 4:
+                return float(nearest_neighbors[0][1]) if nearest_neighbors else 1.0
+            
             # Compute LOF using scikit-learn
-            lof = LocalOutlierFactor(n_neighbors=min(len(neighbor_vectors), self.k_neighbors), 
+            lof = LocalOutlierFactor(n_neighbors=min(k, len(all_vectors) - 1), 
                                    contamination='auto',
                                    novelty=False)
             

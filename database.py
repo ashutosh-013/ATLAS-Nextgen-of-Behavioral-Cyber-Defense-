@@ -18,6 +18,24 @@ from typing import Dict, List, Any, Optional
 
 DB_PATH = Path(__file__).parent / "atlas_state.db"
 
+
+def _safe_json_loads(val: Any, default: Any) -> Any:
+    """Safely decode JSON strings with robust fallback for raw scalars or malformed records."""
+    if val is None:
+        return default
+    if isinstance(val, (list, dict)):
+        return val
+    s = str(val).strip()
+    if not s:
+        return default
+    try:
+        return json.loads(s)
+    except Exception:
+        if isinstance(default, list) and s:
+            return [s]
+        return default
+
+
 class DatabaseDriver:
     """Abstract Database Driver interface."""
     def init_db(self): raise NotImplementedError
@@ -30,6 +48,7 @@ class DatabaseDriver:
     def save_blocked_ip(self, ip, timestamp, status, service, payload): raise NotImplementedError
     def get_blocked_ips(self): raise NotImplementedError
     def update_blocked_ip_status(self, ip, status): raise NotImplementedError
+    def get_forensic_evidence_chain(self, root_id: str) -> Dict[str, Any]: raise NotImplementedError
 
 
 class SQLiteDriver(DatabaseDriver):
@@ -452,16 +471,16 @@ class SQLiteDriver(DatabaseDriver):
                 'fingerprint': r['fingerprint'],
                 'classification': r['classification'],
                 'dna_version': r['dna_version'],
-                'feature_vector': json.loads(r['feature_vector'] or '[]'),
-                'sequence_flow': json.loads(r['sequence_flow'] or '[]'),
-                'feature_breakdown': json.loads(r['feature_breakdown'] or '{}'),
+                'feature_vector': _safe_json_loads(r['feature_vector'], []),
+                'sequence_flow': _safe_json_loads(r['sequence_flow'], []),
+                'feature_breakdown': _safe_json_loads(r['feature_breakdown'], {}),
                 'bsf_similarity': r['bsf_similarity'],
                 'nsf_novelty': r['nsf_novelty'],
                 'ccf_confidence': r['ccf_confidence'],
                 'risk_score': r['risk_score'],
                 'campaign': r['campaign'],
-                'iocs': json.loads(r['iocs'] or '[]'),
-                'mitre_techniques': json.loads(r['mitre_techniques'] or '[]'),
+                'iocs': _safe_json_loads(r['iocs'], []),
+                'mitre_techniques': _safe_json_loads(r['mitre_techniques'], []),
                 'observation_count': r['observation_count'],
                 'analyst_confirmed_count': r['analyst_confirmed_count'] if 'analyst_confirmed_count' in r.keys() else 0,
                 'first_seen': r['first_seen'],
@@ -470,9 +489,9 @@ class SQLiteDriver(DatabaseDriver):
                 'false_positive_count': r['false_positive_count'],
                 'related_investigation_id': r['related_investigation_id'],
                 'related_threat_id': r['related_threat_id'],
-                'provenance_sources': json.loads(r['provenance_sources'] or '[]'),
-                'supporting_evidence': json.loads(r['supporting_evidence'] or '[]'),
-                'contradicting_evidence': json.loads(r['contradicting_evidence'] or '[]')
+                'provenance_sources': _safe_json_loads(r['provenance_sources'], []),
+                'supporting_evidence': _safe_json_loads(r['supporting_evidence'], []),
+                'contradicting_evidence': _safe_json_loads(r['contradicting_evidence'], [])
             })
 
         total_pages = max(1, (total_count + page_size - 1) // page_size) if total_count > 0 else 1
@@ -497,16 +516,16 @@ class SQLiteDriver(DatabaseDriver):
             'fingerprint': r['fingerprint'],
             'classification': r['classification'],
             'dna_version': r['dna_version'],
-            'feature_vector': json.loads(r['feature_vector'] or '[]'),
-            'sequence_flow': json.loads(r['sequence_flow'] or '[]'),
-            'feature_breakdown': json.loads(r['feature_breakdown'] or '{}'),
+            'feature_vector': _safe_json_loads(r['feature_vector'], []),
+            'sequence_flow': _safe_json_loads(r['sequence_flow'], []),
+            'feature_breakdown': _safe_json_loads(r['feature_breakdown'], {}),
             'bsf_similarity': r['bsf_similarity'],
             'nsf_novelty': r['nsf_novelty'],
             'ccf_confidence': r['ccf_confidence'],
             'risk_score': r['risk_score'],
             'campaign': r['campaign'],
-            'iocs': json.loads(r['iocs'] or '[]'),
-            'mitre_techniques': json.loads(r['mitre_techniques'] or '[]'),
+            'iocs': _safe_json_loads(r['iocs'], []),
+            'mitre_techniques': _safe_json_loads(r['mitre_techniques'], []),
             'observation_count': r['observation_count'],
             'analyst_confirmed_count': r['analyst_confirmed_count'] if 'analyst_confirmed_count' in r.keys() else 0,
             'first_seen': r['first_seen'],
@@ -515,9 +534,9 @@ class SQLiteDriver(DatabaseDriver):
             'false_positive_count': r['false_positive_count'],
             'related_investigation_id': r['related_investigation_id'],
             'related_threat_id': r['related_threat_id'],
-            'provenance_sources': json.loads(r['provenance_sources'] or '[]'),
-            'supporting_evidence': json.loads(r['supporting_evidence'] or '[]'),
-            'contradicting_evidence': json.loads(r['contradicting_evidence'] or '[]')
+            'provenance_sources': _safe_json_loads(r['provenance_sources'], []),
+            'supporting_evidence': _safe_json_loads(r['supporting_evidence'], []),
+            'contradicting_evidence': _safe_json_loads(r['contradicting_evidence'], [])
         }
 
     def get_pattern_by_fingerprint(self, fingerprint: str):
@@ -747,7 +766,7 @@ class SQLiteDriver(DatabaseDriver):
         query = "SELECT event_json FROM telemetry_events WHERE 1=1"
         params = []
         if source_mode:
-            query += " AND source_mode = ?"
+            query += " AND UPPER(source_mode) = UPPER(?)"
             params.append(source_mode)
         if event_type:
             query += " AND event_type = ?"
@@ -994,7 +1013,7 @@ class SQLiteDriver(DatabaseDriver):
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        query = "SELECT * FROM campaigns WHERE source_mode = ?"
+        query = "SELECT * FROM campaigns WHERE UPPER(source_mode) = UPPER(?)"
         params = [source_mode]
 
         if status:
@@ -1320,6 +1339,223 @@ class SQLiteDriver(DatabaseDriver):
         conn.commit()
         conn.close()
 
+    def get_forensic_evidence_chain(self, root_id: str) -> Dict[str, Any]:
+        """
+        Extracts the verifiable, relational end-to-end forensic evidence chain
+        starting from or containing `root_id`.
+        
+        Relational Path:
+        Telemetry Event(s) -> Behavioral DNA Pattern -> Campaign Attribution -> Playbook Defense Action -> Verification Status
+        
+        Never manufactures security evidence: if no matching record is found, returns INSUFFICIENT_DATA.
+        """
+        conn = self.get_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        # 1. Search for root_id across the 4 key stages:
+        # Stage A: Telemetry Events (by event_id or correlation_id)
+        cursor.execute(
+            "SELECT event_json FROM telemetry_events WHERE event_id = ? OR correlation_id = ? ORDER BY timestamp ASC",
+            (root_id, root_id)
+        )
+        ev_rows = cursor.fetchall()
+        events = []
+        for r in ev_rows:
+            try:
+                events.append(json.loads(r['event_json']))
+            except Exception:
+                pass
+
+        # Stage B: Behavior Patterns (by pattern_id, fingerprint, related_investigation_id, related_threat_id)
+        cursor.execute(
+            "SELECT * FROM behavior_patterns WHERE pattern_id = ? OR fingerprint = ? OR related_investigation_id = ? OR related_threat_id = ?",
+            (root_id, root_id, root_id, root_id)
+        )
+        bp_row = cursor.fetchone()
+        pattern = None
+        if bp_row:
+            pattern = dict(bp_row)
+            for k in ["feature_vector", "sequence_flow", "feature_breakdown", "iocs", "mitre_techniques", "provenance_sources", "supporting_evidence", "contradicting_evidence"]:
+                if pattern.get(k):
+                    try: pattern[k] = json.loads(pattern[k])
+                    except Exception: pass
+
+        # Stage C: Campaigns (by campaign_id or evidence_event_ids containing root_id)
+        cursor.execute(
+            "SELECT * FROM campaigns WHERE campaign_id = ? OR evidence_event_ids LIKE ?",
+            (root_id, f"%{root_id}%")
+        )
+        camp_row = cursor.fetchone()
+        campaign = None
+        if camp_row:
+            campaign = dict(camp_row)
+            for k in ["attribution", "behavior_fingerprint"]:
+                if campaign.get(k):
+                    try: campaign[k] = json.loads(campaign[k])
+                    except Exception: pass
+            for k in ["evidence_event_ids", "attack_session_ids", "ioc_ids", "technique_ids", "source_ips", "destination_ips", "target_ports", "honeypots", "hosts", "observed_stages", "confidence_reasons", "severity_reasons", "audit_trail"]:
+                if campaign.get(k):
+                    try: campaign[k] = json.loads(campaign[k])
+                    except Exception: campaign[k] = []
+
+        # Stage D: Playbook Actions (by audit_id or evidence_event_ids containing root_id)
+        cursor.execute(
+            "SELECT * FROM playbook_audit_log WHERE audit_id = ? OR evidence_event_ids LIKE ? ORDER BY timestamp ASC",
+            (root_id, f"%{root_id}%")
+        )
+        pb_rows = cursor.fetchall()
+        playbook_actions = []
+        for r in pb_rows:
+            pbd = dict(r)
+            try:
+                pbd['evidence_event_ids'] = json.loads(pbd.get('evidence_event_ids') or '[]')
+            except Exception:
+                pbd['evidence_event_ids'] = []
+            playbook_actions.append(pbd)
+
+        # Cross-correlation:
+        # If we found a campaign or playbook action first, find referenced events if we haven't found events yet
+        referenced_event_ids = set()
+        if campaign and campaign.get('evidence_event_ids'):
+            for eid in campaign['evidence_event_ids']:
+                if isinstance(eid, str): referenced_event_ids.add(eid)
+        for pba in playbook_actions:
+            for eid in pba.get('evidence_event_ids', []):
+                if isinstance(eid, str): referenced_event_ids.add(eid)
+
+        if not events and referenced_event_ids:
+            for eid in referenced_event_ids:
+                cursor.execute("SELECT event_json FROM telemetry_events WHERE event_id = ?", (eid,))
+                er = cursor.fetchone()
+                if er and er['event_json']:
+                    try: events.append(json.loads(er['event_json']))
+                    except Exception: pass
+
+        # If we have events, see if we can find associated campaign or pattern if not yet found
+        if events and not campaign:
+            for ev in events:
+                eid = ev.get('event_id')
+                if eid:
+                    cursor.execute("SELECT * FROM campaigns WHERE evidence_event_ids LIKE ?", (f"%{eid}%",))
+                    cr = cursor.fetchone()
+                    if cr:
+                        campaign = dict(cr)
+                        for k in ["attribution", "behavior_fingerprint"]:
+                            if campaign.get(k):
+                                try: campaign[k] = json.loads(campaign[k])
+                                except Exception: pass
+                        for k in ["evidence_event_ids", "attack_session_ids", "ioc_ids", "technique_ids", "source_ips", "destination_ips", "target_ports", "honeypots", "hosts", "observed_stages", "confidence_reasons", "severity_reasons", "audit_trail"]:
+                            if campaign.get(k):
+                                try: campaign[k] = json.loads(campaign[k])
+                                except Exception: campaign[k] = []
+                        break
+
+        if events and not playbook_actions:
+            for ev in events:
+                eid = ev.get('event_id')
+                if eid:
+                    cursor.execute("SELECT * FROM playbook_audit_log WHERE evidence_event_ids LIKE ?", (f"%{eid}%",))
+                    pbrs = cursor.fetchall()
+                    for r in pbrs:
+                        pbd = dict(r)
+                        try: pbd['evidence_event_ids'] = json.loads(pbd.get('evidence_event_ids') or '[]')
+                        except Exception: pbd['evidence_event_ids'] = []
+                        playbook_actions.append(pbd)
+
+        conn.close()
+
+        # If absolutely nothing found across all tables:
+        if not events and not pattern and not campaign and not playbook_actions:
+            return {
+                "status": "INSUFFICIENT_DATA",
+                "root_id": root_id,
+                "provenance": None,
+                "evidence_chain": [],
+                "events": [],
+                "behavior_dna": None,
+                "campaign": None,
+                "playbook_actions": []
+            }
+
+        # Build sequential evidence steps
+        chain = []
+        provenance = None
+
+        if events:
+            provenance = events[0].get('provenance')
+            chain.append({
+                "stage": "TELEMETRY_INGESTION",
+                "status": "VERIFIED",
+                "timestamp": events[0].get('timestamp'),
+                "details": f"{len(events)} telemetry event(s) captured",
+                "event_ids": [ev.get('event_id') for ev in events if ev.get('event_id')],
+                "collector": provenance.get('collector') if provenance else events[0].get('source'),
+                "provenance": provenance
+            })
+
+        if pattern:
+            chain.append({
+                "stage": "BEHAVIORAL_DNA_ANALYSIS",
+                "status": "VERIFIED",
+                "timestamp": pattern.get('last_seen') or pattern.get('first_seen'),
+                "pattern_id": pattern.get('pattern_id'),
+                "classification": pattern.get('classification'),
+                "dna_version": pattern.get('dna_version'),
+                "bsf_similarity": pattern.get('bsf_similarity'),
+                "nsf_novelty": pattern.get('nsf_novelty'),
+                "ccf_confidence": pattern.get('ccf_confidence'),
+                "risk_score": pattern.get('risk_score')
+            })
+
+        if campaign:
+            chain.append({
+                "stage": "CAMPAIGN_ATTRIBUTION",
+                "status": "VERIFIED",
+                "timestamp": campaign.get('last_seen') or campaign.get('first_seen'),
+                "campaign_id": campaign.get('campaign_id'),
+                "campaign_name": campaign.get('campaign_name'),
+                "campaign_type": campaign.get('campaign_type'),
+                "severity": campaign.get('severity'),
+                "confidence": campaign.get('confidence'),
+                "analyst_status": campaign.get('analyst_status')
+            })
+
+        if playbook_actions:
+            for pba in playbook_actions:
+                chain.append({
+                    "stage": "DEFENSIVE_ACTION",
+                    "status": pba.get('execution_status', 'COMPLETED'),
+                    "timestamp": pba.get('timestamp'),
+                    "audit_id": pba.get('audit_id'),
+                    "action": pba.get('action'),
+                    "target": pba.get('target'),
+                    "policy": pba.get('policy'),
+                    "authorization": pba.get('authorization'),
+                    "verification_status": pba.get('verification_status', 'UNVERIFIED'),
+                    "result": pba.get('result')
+                })
+
+        # Calculate chain completeness
+        stages_present = {c["stage"] for c in chain}
+        if {"TELEMETRY_INGESTION", "CAMPAIGN_ATTRIBUTION", "DEFENSIVE_ACTION"}.issubset(stages_present):
+            status = "PROVEN_CHAIN"
+        else:
+            status = "PARTIAL_CHAIN"
+
+        return {
+            "status": status,
+            "root_id": root_id,
+            "provenance": provenance,
+            "evidence_count": len(events),
+            "stages_completed": len(chain),
+            "evidence_chain": chain,
+            "events": events,
+            "behavior_dna": pattern,
+            "campaign": campaign,
+            "playbook_actions": playbook_actions
+        }
+
 
 class TimescaleDBDriver(DatabaseDriver):
     """TimescaleDB / PostgreSQL Driver for Enterprise Scale."""
@@ -1409,6 +1645,10 @@ class TimescaleDBDriver(DatabaseDriver):
         if not self.connection_string:
             return self.fallback.get_campaign_stats(*args, **kwargs)
 
+    def get_forensic_evidence_chain(self, *args, **kwargs):
+        if not self.connection_string:
+            return self.fallback.get_forensic_evidence_chain(*args, **kwargs)
+
 
 # Vector DB Interface for d-BEF Embeddings
 class VectorDBDriver:
@@ -1476,6 +1716,7 @@ def set_bulk_settings(*args, **kwargs): return _ACTIVE_DB.set_bulk_settings(*arg
 def reset_settings(*args, **kwargs): return _ACTIVE_DB.reset_settings(*args, **kwargs)
 def get_settings_audit_log(*args, **kwargs): return _ACTIVE_DB.get_settings_audit_log(*args, **kwargs)
 def record_settings_audit(*args, **kwargs): return _ACTIVE_DB.record_settings_audit(*args, **kwargs)
+def get_forensic_evidence_chain(*args, **kwargs): return _ACTIVE_DB.get_forensic_evidence_chain(*args, **kwargs)
 
 
 if __name__ == "__main__":

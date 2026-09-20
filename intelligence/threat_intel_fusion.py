@@ -126,14 +126,20 @@ class ThreatIntelFusion:
             matches = self._correlate_malware_feeds(badna_profile)
             enriched.threat_intel_context["malware_correlation"] = matches
             
-        # 4. Check CVE/KEV for vulnerability indicators (e.g. if novelty score is high)
+        # 4. Check CVE/KEV for vulnerability indicators (if CVE in metadata or high novelty)
         novelty_score = 0.0
         if badna_profile.novelty_result and hasattr(badna_profile.novelty_result, 'novelty_score'):
             novelty_score = badna_profile.novelty_result.novelty_score
             
-        if novelty_score > 0.8:
+        has_cve_meta = badna_profile.metadata and any(
+            k in badna_profile.metadata or (isinstance(v, str) and "CVE-" in v) 
+            for k, v in badna_profile.metadata.items()
+        )
+        if novelty_score > 0.8 or has_cve_meta:
             vulns = self._check_vulnerability_indicators(badna_profile)
             enriched.threat_intel_context["related_vulnerabilities"] = vulns
+        else:
+            enriched.threat_intel_context["related_vulnerabilities"] = []
             
         return enriched
         

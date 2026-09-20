@@ -76,6 +76,10 @@ class BSFEngine:
         if vector_a.shape != (128,) or vector_b.shape != (128,):
             raise ValidationError("BADNA embeddings must be 128-dimensional")
         
+        # Clean inputs of any non-finite values
+        vector_a = np.nan_to_num(vector_a, nan=0.0, posinf=0.0, neginf=0.0)
+        vector_b = np.nan_to_num(vector_b, nan=0.0, posinf=0.0, neginf=0.0)
+        
         # Check for zero vectors
         norm_a = np.linalg.norm(vector_a)
         norm_b = np.linalg.norm(vector_b)

@@ -1,7 +1,7 @@
 {
   "campaigns": [
     {
-      "campaign_id": "4085d741-5c2e-4823-900a-a84d5250d5a7",
+      "campaign_id": "9185510b-0364-4411-a6eb-d4d3b59eb766",
       "campaign_name": "Campaign_Benign_Baseline",
       "signature_embedding": [
         0.21999577827625555,
@@ -134,29 +134,29 @@
         0.010761241261499936
       ],
       "member_patterns": [
-        "df2f4d76-4dd6-40be-9e9f-db345350a1fb",
-        "e15939d4-656b-4ad8-be3f-cecd4c75897b",
-        "4c4d5b69-67ac-44ca-b1ef-6f2f67cb28ab",
-        "be4a461c-f4d3-455d-9616-6f201bdefc5e",
-        "1bafe4fc-5aa4-499f-95eb-4c833c99a56b",
-        "cd2de884-1de2-4aa5-b3f3-31cab2288829",
-        "56f5066d-d59e-49ec-96f0-4820e4e491a1",
-        "9d1441e5-db9a-4136-91cc-8c3670da3ba7",
-        "d7c13b80-7ae9-41b3-b55e-39c9231b326e",
-        "6a5b3129-1c8b-4a97-a67b-67f6f0c9382e"
+        "5ecd58fa-3178-4653-a351-d55ef22606c5",
+        "745fc8a8-1730-4197-af60-368d51f78945",
+        "7bb6dd9b-9e05-4efb-9ea5-a35c54787de4",
+        "0173d1c7-faf4-4429-80a6-4f1ac6850a2f",
+        "37ea6fcd-2825-42d5-a96b-d61339046250",
+        "4be700a4-a3ff-449a-80b1-2ab6c4c175e2",
+        "97b9a7fd-c3b5-417d-a846-fbf42482aff2",
+        "65be51f2-63f3-4dc6-b7f0-80888b9e5f21",
+        "10c20c4c-3477-4753-b7af-3bc5ac1925d5",
+        "34e8f34f-4d38-4297-8f99-235948c6b1a4"
       ],
       "threat_class": "Benign",
       "common_techniques": [
         "T1059",
         "T1082"
       ],
-      "first_seen": "2026-06-13T22:48:20.267671",
-      "last_seen": "2026-07-13T22:48:20.267673",
+      "first_seen": "2026-08-07T01:35:09.388355",
+      "last_seen": "2026-09-06T01:35:09.388357",
       "detection_count": 10,
       "attribution": "Benign_Baseline"
     },
     {
-      "campaign_id": "b54c30f4-df20-4035-8dda-128c0f44e715",
+      "campaign_id": "a44df191-adea-4c6c-9db9-deb040236d7a",
       "campaign_name": "Campaign_APT29_Nobelium",
       "signature_embedding": [
         0.0025252631277131185,
@@ -289,16 +289,16 @@
         -0.011186740283524378
       ],
       "member_patterns": [
-        "49d3c823-14f7-49d0-9d5c-521444e3af0a",
-        "45ac2848-4fd2-4258-9c1f-0d2c82a1000d",
-        "99548ea5-fa8e-4d34-b618-f248853756d3",
-        "cc3379fd-6dba-4fa6-96ce-6a8b1a39ec00",
-        "926946ae-acd5-4437-9950-9c115bd0334e",
-        "7c1d46a3-d30e-4a96-9a1c-6b038a204c3a",
-        "4c0960e4-c0f1-4af9-b590-f5e5517405fd",
-        "69d12ae1-499a-4985-890b-74670e769019",
-        "b3c3741e-900c-450c-873d-e8fb4c171082",
-        "f0835e62-ada5-4c50-b375-5d64d371e533"
+        "0e94841f-6ceb-4570-b5f4-a019a24d77e2",
+        "01145ce5-f345-44b3-80f1-6b770c1d39aa",
+        "8ad55b70-f5d4-4e53-a465-d86a3ee2045b",
+        "e834c0d2-45c2-41fd-840b-a9e5db42d29c",
+        "7d7af404-4382-4fbf-b9d1-fbda53acdcdf",
+        "191f61c2-1569-4223-8021-1c50e0e793f5",
+        "da74321f-7124-4ea6-9a85-d0ca98620139",
+        "99ce4e36-2859-4c67-a7ab-973c1bd028a9",
+        "7e0297d8-fc7c-4d20-8ea8-b923e807850b",
+        "ccff83ca-4353-43ae-bcb5-effdfad99c3a"
       ],
       "threat_class": "APT",
       "common_techniques": [
@@ -307,13 +307,13 @@
         "T1570",
         "T1041"
       ],
-      "first_seen": "2026-06-13T22:48:20.267975",
-      "last_seen": "2026-07-13T22:48:20.267984",
+      "first_seen": "2026-08-07T01:35:09.388705",
+      "last_seen": "2026-09-06T01:35:09.388707",
       "detection_count": 10,
       "attribution": "APT29_Nobelium"
     },
     {
-      "campaign_id": "01e18473-3aac-4b77-85af-aa53aac66801",
+      "campaign_id": "75ae1c87-8572-4364-b0c4-3244388732e1",
       "campaign_name": "Campaign_LockBit_Ransomware",
       "signature_embedding": [
         -3.2659082999667e-05,
@@ -446,16 +446,16 @@
         0.006341276540919376
       ],
       "member_patterns": [
-        "43fb328c-df68-4cd1-8a38-b14691714f18",
-        "745d83b5-45ce-43e5-b95c-38994e404fbb",
-        "1aaa9f91-18c2-4359-99ca-5f98d880aca4",
-        "71e64528-8a3b-4157-853e-9a5b11b0def6",
-        "7fa857b4-5551-46fc-a738-a1e90072ef0d",
-        "d3b71a18-5661-4ecf-a38a-f6193f9f3b3e",
-        "a1134351-b1c8-40e1-8b36-f92bef057064",
-        "91c5d03d-674f-430f-98d7-5bafd26384c2",
-        "269731a1-0210-48dc-b435-eed07b1e0e51",
-        "874c408d-61e0-4716-9587-e90b7957fb32"
+        "4b18bd04-817e-4d34-bd97-d1a67e78ef80",
+        "70975fea-7cd0-458a-8074-32a6d6dd7dc9",
+        "41203096-2fad-4392-ae47-4cfe8faf3961",
+        "1392cd49-18c2-49cf-9749-b4b23e617045",
+        "875a2fed-ddb7-47e0-b4ee-0c12039e62a5",
+        "162115bc-7d13-4d2f-bb38-ab1dff661c34",
+        "c1dc44a4-58a8-4052-98be-c4de011f7474",
+        "f5ded8c2-72ab-4d71-be24-222127d1bd1e",
+        "f20f78a8-3fc4-41eb-8efe-20308efab017",
+        "3300dfb7-973c-41ad-89bb-d07cd5e9f16e"
       ],
       "threat_class": "Ransomware",
       "common_techniques": [
@@ -463,13 +463,13 @@
         "T1490",
         "T1547"
       ],
-      "first_seen": "2026-06-13T22:48:20.268310",
-      "last_seen": "2026-07-13T22:48:20.268312",
+      "first_seen": "2026-08-07T01:35:09.389026",
+      "last_seen": "2026-09-06T01:35:09.389028",
       "detection_count": 10,
       "attribution": "LockBit_Ransomware"
     },
     {
-      "campaign_id": "4102ccc7-06c8-456d-a8f4-82dffd16b856",
+      "campaign_id": "72dd517f-27bc-4ec9-a28a-5e714336ab49",
       "campaign_name": "Campaign_Insider_Exfil",
       "signature_embedding": [
         0.0024640448954029804,
@@ -602,16 +602,16 @@
         0.0029214844246101207
       ],
       "member_patterns": [
-        "d7298db7-d407-4e95-8e11-634da458d00b",
-        "23175130-59f4-4139-9dd7-f28e81158126",
-        "7815e914-d690-420b-ab3c-81469c9ed878",
-        "83925db9-672e-4485-a349-88a3a9292fd8",
-        "6d6bd53a-4d48-4089-a5a6-7bf616759cbe",
-        "c78be68b-95cf-450e-b1c4-83b1e0d94a9a",
-        "00f99585-bb3e-40a2-87db-386e7c27b1fb",
-        "bbf63b07-f97a-44be-9269-7d39742bbeae",
-        "4eefcacf-1e65-4a6a-92af-3554f4d530a2",
-        "5ff0bd15-58e4-4ce4-8f18-f2c0ce857198"
+        "52aecec3-cdb1-4879-bda6-57362c7ec504",
+        "00665650-8573-49f9-8644-02495bd4ccbb",
+        "b8ba7b54-7a6f-4e07-9d12-2810df3922f0",
+        "183b4f17-efd4-4eeb-93ac-f7fb2c323bbf",
+        "bb9c1859-7e64-43e5-b366-d211ce3d6eb6",
+        "d34b3952-bae7-46a7-a06e-8c5fffa11c41",
+        "5a9eae0c-17e6-4574-998c-a25fa9474884",
+        "81490ca6-4098-4213-ad48-0fe0e88ea9a7",
+        "af0f162e-565d-4e79-93cb-5491ea61139d",
+        "db87a79f-ff1f-421d-a834-dae5b15d9f16"
       ],
       "threat_class": "Insider_Threat",
       "common_techniques": [
@@ -619,13 +619,13 @@
         "T1074",
         "T1048"
       ],
-      "first_seen": "2026-06-13T22:48:20.268636",
-      "last_seen": "2026-07-13T22:48:20.268637",
+      "first_seen": "2026-08-07T01:35:09.389342",
+      "last_seen": "2026-09-06T01:35:09.389344",
       "detection_count": 10,
       "attribution": "Insider_Exfil"
     },
     {
-      "campaign_id": "ab491980-593b-4dfa-bcd8-ca9b12bac414",
+      "campaign_id": "2c70ea7b-2d7c-445c-9eb8-14cb629bd8a0",
       "campaign_name": "Campaign_Harvester_Credential",
       "signature_embedding": [
         -0.009430198001231281,
@@ -758,16 +758,16 @@
         -0.0057057548107667675
       ],
       "member_patterns": [
-        "d9a2871f-53ef-4e1a-8fcb-4f25428754e8",
-        "a69bd389-27e1-430d-83c2-f1958846db7e",
-        "b295690f-2f0a-4c36-a572-b0ef733e2fd3",
-        "a564dc58-329c-4e86-85b5-0435e20d7505",
-        "c002776e-d130-4a72-8ca6-9def0543bfb2",
-        "84e603e0-95d2-4088-ba9c-f5892926e7d6",
-        "9eec7626-8e7c-4bd9-afa8-19eea58f2c04",
-        "37a2ce06-9633-4a29-bc1b-8911e60219a2",
-        "194f8617-e3b5-4cdc-9d6d-4b607a06445b",
-        "2a47b57e-2233-4d87-88e7-00f1b32bea5d"
+        "0f1d5734-d841-4c2c-92f2-b25c6b246eda",
+        "98652a83-1e0f-4b2f-b84d-dc0781c4e685",
+        "0f8b254f-8c4b-4f2f-b3a8-844ce6332521",
+        "2800ecf2-fe28-4ad1-bddd-687b7bbc8636",
+        "854ec13c-aeff-4e17-9c35-bdcc7c7aa9e9",
+        "3393bfe0-2a21-452e-89a3-6b707c3802c7",
+        "40efc5ab-c08a-4f9b-8f29-d59b00da8847",
+        "36724e60-9f5d-4601-83db-72da9ebe5ce4",
+        "743f1c05-d6ee-4c49-a6e0-867189f8eaed",
+        "3ef64182-e44a-48da-b12f-7ffe74ce530a"
       ],
       "threat_class": "Phishing",
       "common_techniques": [
@@ -775,30 +775,15 @@
         "T1078",
         "T1071"
       ],
-      "first_seen": "2026-06-13T22:48:20.268953",
-      "last_seen": "2026-07-13T22:48:20.268955",
+      "first_seen": "2026-08-07T01:35:09.389647",
+      "last_seen": "2026-09-06T01:35:09.389649",
       "detection_count": 10,
       "attribution": "Harvester_Credential"
-    },
-    {
-      "campaign_id": "CMP-2026-0001",
-      "campaign_name": "UNKNOWN BEHAVIORAL CAMPAIGN CMP-2026-0001",
-      "signature_embedding": null,
-      "member_patterns": [],
-      "threat_class": "BEHAVIORAL",
-      "common_techniques": [
-        "T1059.001",
-        "T1071.001"
-      ],
-      "first_seen": "2026-08-27T14:13:46.687598+00:00",
-      "last_seen": "2026-08-27T14:13:46.687617+00:00",
-      "detection_count": 1,
-      "attribution": "UNKNOWN"
     }
   ],
   "metadata": {
     "version": "1.0",
-    "last_updated": "2026-08-27T19:43:46.847613",
-    "campaign_count": 6
+    "last_updated": "2026-09-06T01:35:09.414802",
+    "campaign_count": 5
   }
 }

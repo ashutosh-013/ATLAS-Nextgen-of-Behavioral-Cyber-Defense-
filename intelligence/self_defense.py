@@ -11,7 +11,7 @@ import time
 import psutil
 import logging
 import threading
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Set
 
 logger = logging.getLogger("self_defense")
 
@@ -37,6 +37,28 @@ class SelfDefenseEngine:
         if file_path and os.path.exists(file_path):
             self.protected_files.append(os.path.abspath(file_path))
             logger.info(f"Registered self-defense file guard: {file_path}")
+
+    def check_integrity(self) -> Dict[str, Any]:
+        """Perform a synchronous health and integrity check across monitored PIDs and files."""
+        dead_pids = [pid for pid in self.monitored_pids if not psutil.pid_exists(pid)]
+        alive_pids = [pid for pid in self.monitored_pids if psutil.pid_exists(pid)]
+
+        missing_files = [f for f in self.protected_files if not os.path.exists(f)]
+        intact_files = [f for f in self.protected_files if os.path.exists(f)]
+
+        is_healthy = len(dead_pids) == 0 and len(missing_files) == 0
+
+        return {
+            "status": "HEALTHY" if is_healthy else "COMPROMISED",
+            "is_healthy": is_healthy,
+            "monitored_pids_count": len(self.monitored_pids),
+            "alive_pids": alive_pids,
+            "dead_pids": dead_pids,
+            "protected_files_count": len(self.protected_files),
+            "intact_files": intact_files,
+            "missing_files": missing_files,
+            "timestamp": time.time()
+        }
 
     def start_watchdog(self):
         """Start self-defense watchdog monitor thread."""

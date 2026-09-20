@@ -197,6 +197,11 @@ class BADNAEmbedding:
         if abs(norm - 1.0) > 1e-6:
             raise ValidationError(f"BADNA embedding must have unit length, got norm {norm}")
     
+    @property
+    def dimensions(self) -> int:
+        """Return dimensionality of embedding vector."""
+        return len(self.vector)
+    
     def to_dict(self) -> Dict[str, Any]:
         return {
             'embedding_id': self.embedding_id,

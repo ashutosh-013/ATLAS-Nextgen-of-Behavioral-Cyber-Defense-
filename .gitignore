@@ -7,8 +7,11 @@ __pycache__/
 # Databases & Large State Files (GitHub 100MB limit)
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
 *.db.bak
 atlas_state.db
+knowledge_base/test_evidence/
 
 # Large Datasets & Model Dumps (Do not push to Git)
 datasets/

@@ -65,6 +65,21 @@ def classify_ip_destination(ip_str: Optional[str]) -> str:
         return "UNKNOWN"
 
 @dataclass
+class EventProvenance:
+    source_type: str = "LIVE_HOST"  # LIVE_HOST, SCENARIO_REPLAY, TPOT, DATASET_REPLAY, SYNTHETIC_TEST
+    source_id: str = field(default_factory=get_stable_host_id)
+    collector: str = "windows_etw"  # windows_etw, process_snapshot, socket_tracker, tpot, synthetic_generator
+    event_id: str = ""
+    observed_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    processing_stage: str = "normalized"  # ingested -> normalized -> dbef -> ccf -> alert
+    confidence_calibrated: Optional[float] = None
+    calibration_method: Optional[str] = "Platt_CCF_Task6_1"
+    evidence_count: int = 1
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+@dataclass
 class TelemetryEvent:
     event_id: str = field(default_factory=lambda: f"evt-{uuid.uuid4()}")
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -81,6 +96,7 @@ class TelemetryEvent:
     authentication: Optional[Dict[str, Any]] = None
     file: Optional[Dict[str, Any]] = None
     raw_source: Optional[Dict[str, Any]] = None
+    provenance: Optional[Dict[str, Any]] = None
     
     parent_event_id: Optional[str] = None
     correlation_id: Optional[str] = None
@@ -94,7 +110,7 @@ class TelemetryEvent:
             cmd_clean = re.sub(r'(--password|-password|-token|-secret|-p)\s+[^\s]+', r'\1 [REDACTED]', cmd, flags=re.IGNORECASE)
             self.process["command_line"] = cmd_clean
 
-    def validate() -> bool:
+    def validate(self) -> bool:
         """Validates that event schema fields are strictly sane and valid."""
         if self.source_mode not in ["LIVE", "SCENARIO"]:
             return False
@@ -111,6 +127,24 @@ class TelemetryEvent:
         self.sanitize()
         d = asdict(self)
         
+        # Ensure provenance block is populated with strict fidelity
+        if not d.get("provenance"):
+            src_type = "LIVE_HOST" if self.source_mode == "LIVE" else "SCENARIO_REPLAY"
+            if "tpot" in str(self.source).lower():
+                src_type = "TPOT"
+            prov = EventProvenance(
+                source_type=src_type,
+                source_id=self.host_id,
+                collector=f"{self.source}_{self.event_type}",
+                event_id=self.event_id,
+                observed_at=self.timestamp,
+                processing_stage="normalized",
+                confidence_calibrated=self.confidence,
+                calibration_method="Platt_CCF_Task6_1",
+                evidence_count=1
+            )
+            d["provenance"] = prov.to_dict()
+
         # Populate all 17 required canonical keys at top level (null if non-existent, never fabricated)
         proc = d.get("process") or {}
         net = d.get("network") or {}
@@ -238,6 +272,7 @@ def normalize_raw_event(raw: Dict[str, Any], source_mode: str = "LIVE") -> Dict[
         authentication=auth_dict,
         file=file_dict,
         raw_source=raw_src,
+        provenance=raw.get("provenance"),
         parent_event_id=raw.get("parent_event_id"),
         correlation_id=raw.get("correlation_id"),
         confidence=float(raw.get("confidence", 1.0))

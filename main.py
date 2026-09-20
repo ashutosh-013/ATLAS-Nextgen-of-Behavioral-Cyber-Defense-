@@ -294,6 +294,9 @@ class BADNAAnalysisOrchestrator:
             else:
                 raise e
     
+    # Backwards compatibility alias
+    process_events = analyze_events
+    
     def _execute_step_1_graph_construction(self, raw_events: List[Dict[str, Any]]) -> BehaviorGraph:
         """Execute Step 1: Events → Behavior Graph."""
         try:
@@ -630,33 +633,22 @@ class BADNAAnalysisOrchestrator:
     def _compute_unified_risk(self, threat_severity: float, predicted_intent: str, 
                              novelty_score: float, confidence_score: float,
                              similarity_score: float, lateral_movement: bool, exfiltration: bool) -> float:
-        """Compute unified risk score combining all factors."""
-        # Base risk from core components (weighted combination)
-        base_risk = (
-            0.3 * threat_severity +      # Threat class importance
-            0.3 * novelty_score +        # Zero-day detection importance  
-            0.2 * (1.0 - similarity_score) +  # Invert similarity (dissimilar = higher risk)
-            0.2 * confidence_score       # Confidence in prediction
+        """Compute unified risk score combining all factors using calibrated CCF RiskScorer (Rule #4)."""
+        threat_class = "Unknown"
+        for tc, sev in [('APT', 0.95), ('Ransomware', 0.95), ('Insider_Threat', 0.80), ('Malware', 0.70), ('Phishing', 0.60), ('Benign', 0.10)]:
+            if abs(threat_severity - sev) < 0.05:
+                threat_class = tc
+                break
+        
+        risk_result = self.risk_scorer.compute_risk(
+            similarity_score=similarity_score,
+            novelty_score=novelty_score,
+            confidence_score=confidence_score,
+            threat_class=threat_class,
+            lateral_movement=lateral_movement,
+            exfiltration=exfiltration
         )
-        
-        # Intent-based risk adjustments (smaller bonuses to stay in range)
-        intent_risk_bonus = 0.0
-        high_risk_intents = ['privilege_escalation', 'lateral_movement', 'exfiltration', 'impact', 'persistence']
-        
-        if any(intent in predicted_intent.lower() for intent in high_risk_intents):
-            intent_risk_bonus += 0.10  # Reduced from 0.15
-        
-        if lateral_movement:
-            intent_risk_bonus += 0.05  # Reduced from 0.10
-        
-        if exfiltration:
-            intent_risk_bonus += 0.05  # Reduced from 0.15
-        
-        # Combined risk with proper normalization
-        unified_risk = base_risk + intent_risk_bonus
-        
-        # Ensure result is in [0.0, 1.0] range
-        return np.clip(unified_risk, 0.0, 1.0)
+        return float(risk_result['score'])
     
     def _categorize_risk_level(self, risk_score: float) -> str:
         """Categorize risk score into levels."""
@@ -843,6 +835,10 @@ def setup_cli() -> argparse.ArgumentParser:
                             help="Test specific components (default: all)")
     
     return parser
+
+
+# Backwards compatibility alias
+BADNAOrchestrator = BADNAAnalysisOrchestrator
 
 
 def main():

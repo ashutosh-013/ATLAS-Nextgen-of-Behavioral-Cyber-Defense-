@@ -150,7 +150,19 @@ class VSSRollbackManager:
         try:
             sha = hashlib.sha256()
             with open(path, "rb") as f:
-                sha.update(f.read(65536))
+                while chunk := f.read(65536):
+                    sha.update(chunk)
             return sha.hexdigest()
         except Exception:
             return "UNREADABLE"
+
+
+RollbackManager = VSSRollbackManager
+_rollback_mgr_instance = None
+
+
+def get_rollback_manager() -> VSSRollbackManager:
+    global _rollback_mgr_instance
+    if _rollback_mgr_instance is None:
+        _rollback_mgr_instance = VSSRollbackManager()
+    return _rollback_mgr_instance

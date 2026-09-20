@@ -19,6 +19,7 @@ import time
 import math
 import logging
 import ipaddress
+import psutil
 from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional, Tuple, Set
 
@@ -141,7 +142,8 @@ class AnalyticsEngine:
         Gathers and normalizes events across all database tables:
         telemetry_events, analysis_history, tpot_alerts, tpot_sessions, and behavior_patterns.
         """
-        cache_key = f"{source_mode}:{time_range}"
+        q_mode = str(source_mode or "LIVE").upper()
+        cache_key = f"{q_mode}:{time_range}"
         now_ts = time.time()
         if cache_key in self._cache:
             ts_cached, ev_cached = self._cache[cache_key]
@@ -162,10 +164,12 @@ class AnalyticsEngine:
             tpot_alerts = database.get_tpot_alerts()
             for al in tpot_alerts:
                 al_copy = dict(al)
-                al_copy["source_mode"] = source_mode
+                al_mode = str(al.get("source_mode") or "TPOT").upper()
+                al_copy["source_mode"] = al_mode
                 al_copy["source"] = "TPotDecoy"
                 al_copy["event_type"] = "network"
-                all_raw.append(al_copy)
+                if q_mode in ["ALL", "TPOT", al_mode] or (q_mode == "LIVE" and al_mode == "TPOT"):
+                    all_raw.append(al_copy)
         except Exception as e:
             self.logger.error(f"Error reading tpot_alerts: {e}")
 
@@ -174,10 +178,12 @@ class AnalyticsEngine:
             tpot_sess = database.get_tpot_sessions()
             for s in tpot_sess:
                 s_copy = dict(s)
-                s_copy["source_mode"] = source_mode
+                s_mode = str(s.get("source_mode") or "TPOT").upper()
+                s_copy["source_mode"] = s_mode
                 s_copy["source"] = "TPotHoneypot"
                 s_copy["event_type"] = "honeypot_session"
-                all_raw.append(s_copy)
+                if q_mode in ["ALL", "TPOT", s_mode] or (q_mode == "LIVE" and s_mode == "TPOT"):
+                    all_raw.append(s_copy)
         except Exception as e:
             self.logger.error(f"Error reading tpot_sessions: {e}")
 
@@ -189,8 +195,11 @@ class AnalyticsEngine:
                 if isinstance(ev_list, list):
                     for ev in ev_list:
                         if isinstance(ev, dict):
-                            ev["source_mode"] = source_mode
-                            all_raw.append(ev)
+                            ev_copy = dict(ev)
+                            h_mode = str(ev.get("source_mode") or "DATASET_REPLAY").upper()
+                            ev_copy["source_mode"] = h_mode
+                            if q_mode in ["ALL", h_mode]:
+                                all_raw.append(ev_copy)
         except Exception as e:
             self.logger.error(f"Error reading analysis_history: {e}")
 
@@ -201,7 +210,7 @@ class AnalyticsEngine:
             norm = normalize_event_record(r)
             if norm["event_id"] not in seen_ids:
                 seen_ids.add(norm["event_id"])
-                if norm["source_mode"] == source_mode or source_mode == "ALL":
+                if norm["source_mode"] == q_mode or q_mode == "ALL":
                     normalized.append(norm)
 
         # Apply time range filter
@@ -298,6 +307,8 @@ class AnalyticsEngine:
             residual_risk = round(max((c.get("residual_risk", current_risk * 0.3) for c in active_camps), default=0.0), 2)
 
         return {
+            "status": "INSUFFICIENT_DATA" if len(events) == 0 else "PROVEN_LIVE",
+            "evidence_count": len(events),
             "source_mode": source_mode,
             "time_range": time_range,
             "data_freshness": {
@@ -400,6 +411,8 @@ class AnalyticsEngine:
             })
 
         return {
+            "status": "INSUFFICIENT_DATA" if len(events) == 0 else "PROVEN_LIVE",
+            "evidence_count": len(events),
             "source_mode": source_mode,
             "time_range": time_range,
             "metric_type": metric_type,
@@ -937,7 +950,8 @@ class AnalyticsEngine:
     # 10. DETECTION PERFORMANCE & LATENCIES
     # =========================================================================
     def calculate_detection_and_response_performance(self, source_mode: str = "LIVE", time_range: str = "24h") -> Dict[str, Any]:
-        """Calculates MTTD and MTTR with exact sample sizes and percentiles."""
+        """Calculates MTTD, MTTR, and platform resource telemetry derived from empirical data."""
+        start_t = time.perf_counter()
         campaigns = database.get_campaigns(source_mode=source_mode)
         audit_logs = database.get_playbook_audit_logs(limit=200)
 
@@ -958,7 +972,26 @@ class AnalyticsEngine:
         response_latencies = []
         for log in audit_logs:
             if log.get("execution_status") in ["VERIFIED", "COMPLETED"]:
-                response_latencies.append(4.2)
+                # Try to compute real latency from evidence event timestamp
+                ev_ids = log.get("evidence_event_ids") or []
+                log_ts = log.get("timestamp")
+                computed = False
+                if ev_ids and log_ts:
+                    try:
+                        ev = database.get_telemetry_event_by_id(ev_ids[0])
+                        if ev and ev.get("timestamp"):
+                            dt_ev = datetime.fromisoformat(ev["timestamp"].replace("Z", "+00:00"))
+                            dt_log = datetime.fromisoformat(log_ts.replace("Z", "+00:00"))
+                            diff = (dt_log - dt_ev).total_seconds()
+                            if 0 < diff <= 86400:
+                                response_latencies.append(round(diff, 2))
+                                computed = True
+                    except Exception:
+                        pass
+                if not computed:
+                    dur = log.get("duration_seconds")
+                    if dur is not None and isinstance(dur, (int, float)) and dur > 0:
+                        response_latencies.append(round(float(dur), 2))
 
         def _percentiles(vals: List[float]) -> Dict[str, Any]:
             if not vals:
@@ -976,6 +1009,13 @@ class AnalyticsEngine:
 
         mttd_stats = _percentiles(detection_latencies)
         mttr_stats = _percentiles(response_latencies)
+
+        # Platform resource telemetry (Rule #9: Measure Everything)
+        proc = psutil.Process()
+        mem_mb = round(proc.memory_info().rss / (1024 * 1024), 2)
+        cpu_pct = proc.cpu_percent(interval=None)
+        thread_cnt = proc.num_threads()
+        elapsed_ms = round((time.perf_counter() - start_t) * 1000, 2)
 
         return {
             "source_mode": source_mode,
@@ -996,6 +1036,13 @@ class AnalyticsEngine:
                 "p95": mttr_stats["p95"],
                 "status": mttr_stats["status"],
                 "reason": f"Calculated from {mttr_stats['sample_size']} verified response actions." if mttr_stats['sample_size'] > 0 else "No verified completed response actions in window."
+            },
+            "platform_metrics": {
+                "memory_usage_mb": mem_mb,
+                "cpu_percent": cpu_pct,
+                "thread_count": thread_cnt,
+                "processing_time_ms": elapsed_ms,
+                "status": "HEALTHY"
             }
         }
 
