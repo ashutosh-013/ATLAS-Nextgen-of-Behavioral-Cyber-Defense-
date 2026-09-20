@@ -15,9 +15,33 @@ import yaml
 import logging
 import logging.handlers
 import os
+import sys
 from typing import Dict, Any, Optional, Union
 from dataclasses import dataclass, asdict
 from pathlib import Path
+
+
+def resolve_storage_path(configured_file: str, fallback_subdir: str = "logs") -> Path:
+    """Resolve storage path to user AppData when running in frozen or desktop mode."""
+    custom_dir = os.environ.get("ATLAS_DATA_DIR")
+    if custom_dir:
+        p = Path(custom_dir) / fallback_subdir / Path(configured_file).name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        return p
+
+    is_frozen = getattr(sys, 'frozen', False)
+    local_app_data = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
+    if (is_frozen or os.environ.get("ATLAS_DESKTOP_MODE")) and local_app_data:
+        p = Path(local_app_data) / "ATLAS" / fallback_subdir / Path(configured_file).name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        return p
+
+    p = Path(configured_file)
+    if not p.is_absolute():
+        p = Path(__file__).parent / p
+    p.parent.mkdir(parents=True, exist_ok=True)
+    return p
+
 
 
 # =============================================================================
@@ -393,12 +417,10 @@ class BADNALogger:
         
         # File handler with rotation
         try:
-            # Ensure log directory exists
-            log_path = Path(self.config.log_file)
-            log_path.parent.mkdir(parents=True, exist_ok=True)
-            
+            # Ensure log directory exists in robust user storage location
+            log_path = resolve_storage_path(self.config.log_file, "logs")
             file_handler = logging.handlers.RotatingFileHandler(
-                self.config.log_file,
+                str(log_path),
                 maxBytes=self.config.max_log_size_mb * 1024 * 1024,
                 backupCount=self.config.log_backup_count
             )

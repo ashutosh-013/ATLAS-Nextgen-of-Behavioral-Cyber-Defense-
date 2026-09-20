@@ -222,6 +222,19 @@ python main.py test
 python tpot_live_service.py --port 514 --protocol UDP
 ```
 
+### Option D: Standalone Desktop Application & Installer
+```bash
+# Launch native desktop application (frameless 60 FPS window)
+python atlas_desktop.py
+
+# Or build standalone executable and Inno Setup installer (.exe)
+python build_desktop_app.py
+```
+* **Executable Distribution**: `dist/ATLAS/ATLAS.exe`
+* **Windows Setup Wizard**: `dist_installer/ATLAS_v2.5_Enterprise_Setup.exe`
+* **Zero-Crash Storage Isolation**: Directs SQLite database and logs to `%LOCALAPPDATA%\ATLAS\` ensuring write permissions even when installed into `Program Files`.
+
+
 ---
 
 ## 🧪 Verification & Multi-Agent Test Suites

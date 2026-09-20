@@ -14,6 +14,9 @@ atlas_state.db
 knowledge_base/test_evidence/
 
 # Large Datasets & Model Dumps (Do not push to Git)
+build/
+dist/
+dist_installer/
 datasets/
 backups/
 output/

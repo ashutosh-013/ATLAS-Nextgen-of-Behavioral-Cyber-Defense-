@@ -13,10 +13,36 @@ from pathlib import Path
 import json
 from datetime import datetime, timezone
 import os
+import sys
 import logging
 from typing import Dict, List, Any, Optional
 
-DB_PATH = Path(__file__).parent / "atlas_state.db"
+def get_database_path() -> Path:
+    """
+    Resolve robust database storage path.
+    - If ATLAS_DATA_DIR environment variable is set, use that directory.
+    - If packaged as a frozen desktop executable (sys.frozen), or ATLAS_DESKTOP_MODE is set,
+      use %LOCALAPPDATA%/ATLAS/ (or %APPDATA%/ATLAS/) to ensure write permissions and
+      prevent 'attempt to write a readonly database' crashes when installed in Program Files.
+    - In local development mode, fallback to repository root.
+    """
+    custom_dir = os.environ.get("ATLAS_DATA_DIR")
+    if custom_dir:
+        p = Path(custom_dir)
+        p.mkdir(parents=True, exist_ok=True)
+        return p / "atlas_state.db"
+
+    is_frozen = getattr(sys, 'frozen', False)
+    local_app_data = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
+
+    if (is_frozen or os.environ.get("ATLAS_DESKTOP_MODE")) and local_app_data:
+        p = Path(local_app_data) / "ATLAS"
+        p.mkdir(parents=True, exist_ok=True)
+        return p / "atlas_state.db"
+
+    return Path(__file__).parent / "atlas_state.db"
+
+DB_PATH = get_database_path()
 
 
 def _safe_json_loads(val: Any, default: Any) -> Any:
@@ -53,7 +79,9 @@ class DatabaseDriver:
 
 class SQLiteDriver(DatabaseDriver):
     """High-Performance SQLite Driver with WAL mode enabled."""
-    def __init__(self, db_path: Path = DB_PATH):
+    def __init__(self, db_path: Optional[Path] = None):
+        if db_path is None:
+            db_path = get_database_path()
         self.db_path = str(db_path)
 
     def get_connection(self):
