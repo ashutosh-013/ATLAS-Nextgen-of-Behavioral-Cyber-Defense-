@@ -9,6 +9,12 @@ import subprocess
 import urllib.request
 from datetime import datetime
 
+# Ensure immediate unbuffered console logging in Windows consoles
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(line_buffering=True)
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(line_buffering=True)
+
 import psutil
 
 API_URL = "http://localhost:5000"
@@ -274,4 +280,13 @@ def main():
         print("\n[-] Agent shutting down safely.")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n[-] Agent stopped by user.")
+        sys.exit(0)
+    except Exception as e:
+        print(f"[!] Critical error in ATLAS agent: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
