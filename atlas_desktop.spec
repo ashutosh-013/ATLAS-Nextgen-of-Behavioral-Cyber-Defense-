@@ -23,6 +23,7 @@ datas = [
 
 # Hidden imports required by dynamic scientific & web packages
 hiddenimports = [
+    'unittest',
     'scipy.special.cython_special',
     'scipy.spatial.transform._rotation_groups',
     'sklearn.utils._typedefs',
@@ -37,7 +38,7 @@ excludes = [
     'tkinter', 'matplotlib', 'IPython', 'jupyter', 'jupyter_core', 'jupyter_client',
     'notebook', 'nbformat', 'nbconvert', 'tornado', 'zmq', 'pyzmq',
     'torch', 'torchvision', 'torchaudio', 'tensorflow', 'tensorboard',
-    'keras', 'cv2', 'PIL.ImageQt', 'pytest', 'unittest'
+    'keras', 'cv2', 'PIL.ImageQt'
 ]
 
 a = Analysis(
