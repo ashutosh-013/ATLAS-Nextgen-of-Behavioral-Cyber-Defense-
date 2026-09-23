@@ -1077,11 +1077,53 @@
       "related_mitre_techniques": [],
       "related_campaign_id": null,
       "match_id": "26bca85f-4492-458e-a228-ddc40b2b51f8"
+    },
+    {
+      "alert_id": "ioc_alert_1790194268_evt-ioc-01",
+      "timestamp": "2026-09-24T01:41:08.272604",
+      "event_id": "evt-ioc-01",
+      "ioc_type": "process_name",
+      "ioc_value": "mimikatz.exe",
+      "threat_source": "LocalSignature",
+      "threat_confidence": 0.95,
+      "malware_family": "Unknown",
+      "cve_id": null,
+      "related_mitre_techniques": [],
+      "related_campaign_id": null,
+      "match_id": "26e4d12b-6a16-4d7b-b96f-e9a2bdc8790e"
+    },
+    {
+      "alert_id": "ioc_alert_1790194283_evt-bypass-check-2",
+      "timestamp": "2026-09-24T01:41:23.566773",
+      "event_id": "evt-bypass-check-2",
+      "ioc_type": "file_sha256",
+      "ioc_value": "32c37c352802fb20004fa14053ac13134f31aff747dc0a2962da2ea1ea894d74",
+      "threat_source": "LocalSignature",
+      "threat_confidence": 0.95,
+      "malware_family": "Unknown",
+      "cve_id": null,
+      "related_mitre_techniques": [],
+      "related_campaign_id": null,
+      "match_id": "3406f544-2641-4bcb-bcf8-e26561e347f6"
+    },
+    {
+      "alert_id": "ioc_alert_1790198342_evt-ioc-01",
+      "timestamp": "2026-09-24T02:49:02.309230",
+      "event_id": "evt-ioc-01",
+      "ioc_type": "process_name",
+      "ioc_value": "mimikatz.exe",
+      "threat_source": "LocalSignature",
+      "threat_confidence": 0.95,
+      "malware_family": "Unknown",
+      "cve_id": null,
+      "related_mitre_techniques": [],
+      "related_campaign_id": null,
+      "match_id": "5318ac3a-adcd-45b7-a997-e181e6331f31"
     }
   ],
   "metadata": {
     "version": "1.0",
-    "last_updated": "2026-09-23T13:13:41.796617",
-    "match_count": 77
+    "last_updated": "2026-09-24T02:49:02.309257",
+    "match_count": 80
   }
 }

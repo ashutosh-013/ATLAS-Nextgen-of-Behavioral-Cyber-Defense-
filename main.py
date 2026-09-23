@@ -51,13 +51,13 @@ from intelligence.self_defense import SelfDefenseEngine
 
 # Data models and configuration
 from data_models import (
-    BADNAProfile, SecurityEvent, BehaviorGraph, BADNAEmbedding,
+    BADNAProfile, BehaviorGraph, BADNAEmbedding,
     ThreatClassification, IntentPrediction, Evidence, 
     create_badna_profile
 )
 from config import (
-    initialize_config, get_config, get_logger, get_degradation,
-    BADNAError, ValidationError, ProcessingError, ResourceError
+    initialize_config, get_logger, get_degradation,
+    ValidationError, ProcessingError, ResourceError
 )
 
 

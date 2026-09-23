@@ -29,6 +29,7 @@ tmp/
 *.tmp
 *.pkl
 *.parquet
+test_results_*.json
 
 # Virtual environments
 .venv/

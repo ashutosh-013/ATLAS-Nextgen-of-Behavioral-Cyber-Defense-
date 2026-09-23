@@ -1,1 +1,0 @@
-{"timestamp": "2026-07-03 23:53:39,646", "level": "INFO", "component": "BADNA", "message": "BADNA configuration initialized successfully", "module": "config", "function": "log_operation", "line": 444, "operation_type": "system_operation"}

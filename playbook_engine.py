@@ -7,14 +7,12 @@ controlled state-machine execution, post-execution host state verification, and 
 """
 
 import os
-import sys
 import time
 import uuid
 import json
 import logging
 import shutil
 import subprocess
-import ctypes
 import platform
 from datetime import datetime, timezone
 from dataclasses import dataclass, field, asdict

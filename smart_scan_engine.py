@@ -17,12 +17,11 @@ import uuid
 import threading
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 import psutil
 
 # Core ATLAS engine imports
 import database
-import config_manager
 
 DBEF_EMBEDDING_DIM = 128
 

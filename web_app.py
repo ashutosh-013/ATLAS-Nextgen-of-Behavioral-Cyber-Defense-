@@ -5,7 +5,7 @@ Flask-based web interface for BADNA threat analysis with real-time visualization
 Provides interactive dashboard for analyzing security events and viewing results.
 """
 
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response
 from flask_cors import CORS
 import json
 import os
@@ -14,12 +14,11 @@ from pathlib import Path
 from main import BADNAAnalysisOrchestrator
 from datetime import datetime
 import traceback
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, Any
 
-from firewall_manager import CrossPlatformFirewallManager, WindowsFirewallManager
+from firewall_manager import CrossPlatformFirewallManager
 import queue
 import time
-from flask import Response
 
 app = Flask(__name__)
 CORS(app)
@@ -31,9 +30,8 @@ firewall = CrossPlatformFirewallManager()
 import database
 database.init_db()
 
-from privacy.sanitizer import get_privacy_engine
 from campaign_engine import CampaignEngine
-from playbook_engine import DefenceResponseEngine, Playbook, PlaybookAction
+from playbook_engine import DefenceResponseEngine, Playbook
 from analytics_engine import AnalyticsEngine
 from knowledge_base.knowledge_base import get_knowledge_base
 

@@ -7,8 +7,6 @@ Unified Pipeline Architecture:
 Collector -> Buffer -> Normalize -> Deduplicate -> Correlate -> Store -> Analyze
 """
 
-import os
-import sys
 import platform
 import subprocess
 import socket
@@ -16,7 +14,7 @@ import logging
 import hashlib
 import time
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 import psutil
 
 from telemetry_schema import normalize_raw_event, get_stable_host_id
