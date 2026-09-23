@@ -21,6 +21,34 @@ function navigateToTab(tabName) {
 }
 window.navigateToTab = navigateToTab;
 
+// --- SIDEBAR TOGGLE & RESPONSIVE COLLAPSE CONTROLLER ---
+function toggleSidebar() {
+  const sidebar = document.getElementById('app-sidebar');
+  const icon = document.getElementById('sidebar-toggle-icon');
+  if (!sidebar) return;
+  const isCollapsed = sidebar.classList.toggle('collapsed');
+  if (icon) {
+    icon.className = isCollapsed ? 'fa-solid fa-chevron-right' : 'fa-solid fa-chevron-left';
+  }
+  try {
+    localStorage.setItem('atlas_sidebar_collapsed', isCollapsed ? '1' : '0');
+  } catch (e) {}
+}
+window.toggleSidebar = toggleSidebar;
+
+// Auto-restore saved sidebar state
+try {
+  if (typeof localStorage !== 'undefined' && localStorage.getItem('atlas_sidebar_collapsed') === '1') {
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.getElementById('app-sidebar');
+      const icon = document.getElementById('sidebar-toggle-icon');
+      if (sidebar) sidebar.classList.add('collapsed');
+      if (icon) icon.className = 'fa-solid fa-chevron-right';
+    });
+  }
+} catch (e) {}
+
+
 
 // --- SMART SYSTEM SCAN GLOBAL CONTROLLER ---
 let currentActiveScanId = null;
@@ -2394,10 +2422,12 @@ function initAtlasPlatform() {
     selectedRelTab: 'mitre'
   };
 
-  async function loadKbPatternsTable() {
+  async function loadKbPatternsTable(showSpinner = true) {
     const tbody = document.getElementById('kb-patterns-tbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:1rem; color:var(--text-secondary);"><i class="fa-solid fa-spinner fa-spin"></i> Querying Behavioral Knowledge Base...</td></tr>';
+    if (showSpinner) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:1.25rem; color:var(--text-secondary);"><i class="fa-solid fa-spinner fa-spin"></i> Querying Behavioral Knowledge Base...</td></tr>';
+    }
 
     try {
       const q = encodeURIComponent(kbState.query);
@@ -2965,20 +2995,30 @@ function initAtlasPlatform() {
     const btnPrev = document.getElementById('btn-kb-prev');
     const btnNext = document.getElementById('btn-kb-next');
 
+    let searchDebounceTimer = null;
     if (searchBtn) {
       searchBtn.onclick = () => {
-        if (searchInput) kbState.query = searchInput.value;
+        if (searchInput) kbState.query = searchInput.value.trim();
         kbState.page = 1;
-        loadKbPatternsTable();
+        loadKbPatternsTable(true);
       };
     }
 
     if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+          kbState.query = searchInput.value.trim();
+          kbState.page = 1;
+          loadKbPatternsTable(false); // Smooth live search without full page flash
+        }, 220);
+      });
       searchInput.onkeyup = (e) => {
         if (e.key === 'Enter') {
-          kbState.query = searchInput.value;
+          clearTimeout(searchDebounceTimer);
+          kbState.query = searchInput.value.trim();
           kbState.page = 1;
-          loadKbPatternsTable();
+          loadKbPatternsTable(true);
         }
       };
     }
@@ -8084,21 +8124,31 @@ function initAtlasPlatform() {
   // Initialize SSE stream
   initLiveEventStream();
 
-  // Background fallback polling loops
+  // Adaptive, throttled background polling loop with visibility awareness
+  let lastDeepPoll = 0;
   setInterval(() => {
+    if (typeof document !== 'undefined' && document.hidden) return; // Completely pause polling when tab/window is minimized
+    
+    // Quick status & feed update
     pollHistoryAndStatus();
-    if (state.activeTab === 'tpot') {
-      loadTpotData();
-    } else if (state.activeTab === 'kb') {
-      loadKbPatternsTable();
-    } else if (state.activeTab === 'campaigns') {
-      loadCampaignData();
-    } else if (state.activeTab === 'playbooks') {
-      loadPlaybookData();
-    } else if (state.activeTab === 'analytics') {
-      loadAnalyticsData();
+    
+    // Throttled deep tab data refresh (12s interval prevents UI stutter & flickering)
+    const now = Date.now();
+    if (now - lastDeepPoll >= 12000) {
+      lastDeepPoll = now;
+      if (state.activeTab === 'tpot') {
+        loadTpotData();
+      } else if (state.activeTab === 'kb') {
+        loadKbPatternsTable(false);
+      } else if (state.activeTab === 'campaigns') {
+        loadCampaignData();
+      } else if (state.activeTab === 'playbooks') {
+        loadPlaybookData();
+      } else if (state.activeTab === 'analytics') {
+        loadAnalyticsData();
+      }
     }
-  }, 3000);
+  }, 4000);
 }
 
 if (document.readyState === 'loading') {

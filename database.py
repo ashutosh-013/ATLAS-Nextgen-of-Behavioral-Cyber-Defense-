@@ -87,6 +87,9 @@ class SQLiteDriver(DatabaseDriver):
     def get_connection(self):
         conn = sqlite3.connect(self.db_path, timeout=30.0)
         conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("PRAGMA cache_size=-64000")
+        conn.execute("PRAGMA temp_store=MEMORY")
         return conn
 
     def init_db(self):

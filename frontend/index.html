@@ -58,10 +58,15 @@
   <div class="app-container">
     
     <!-- LEFT SIDEBAR -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="app-sidebar">
+      <!-- Sidebar Collapse / Expand Toggle Button -->
+      <button id="btn-sidebar-toggle" class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar (Expand / Collapse)">
+        <i class="fa-solid fa-chevron-left" id="sidebar-toggle-icon"></i>
+      </button>
+
       <!-- Smart System Scan Action Button -->
-      <button id="btn-smart-scan" class="smart-scan-trigger-btn" onclick="openSmartScanModal()">
-        <i class="fa-solid fa-shield-halved"></i> SMART SYSTEM SCAN
+      <button id="btn-smart-scan" class="smart-scan-trigger-btn" onclick="openSmartScanModal()" title="Start 7-Layer Behavioral Security Scan">
+        <i class="fa-solid fa-shield-halved"></i> <span>SMART SYSTEM SCAN</span>
       </button>
 
       <!-- System Status Widget -->
