@@ -321,7 +321,9 @@ function initAtlasPlatform() {
     ]
   };
 
-  const API_URL = 'http://localhost:5000';
+  const API_URL = (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin.startsWith('http'))
+    ? window.location.origin
+    : 'http://localhost:5000';
 
   // --- REAL-TIME SSE / WEBSOCKET STREAM CONNECTION ---
   function initRealtimeStream() {
@@ -792,7 +794,7 @@ function initAtlasPlatform() {
         similarity = s.similarity_score !== undefined ? s.similarity_score.toFixed(3) : '0.05';
         confidence = s.threat_classification?.confidence !== undefined ? `${(s.threat_classification.confidence * 100).toFixed(1)}%` : '90.2%';
         novelty = s.novelty_score !== undefined ? s.novelty_score.toFixed(3) : '0.05';
-        mitre = s.mitre_techniques ? s.mitre_techniques.join(', ') : 'None';
+        mitre = s.mitre_techniques ? (Array.isArray(s.mitre_techniques) ? s.mitre_techniques.join(', ') : Object.keys(s.mitre_techniques).join(', ')) : 'None';
         iocMatches = s.ioc_match ? 1 : 0;
         finalClass = s.threat_classification?.threat_class || 'Benign';
       } else {
@@ -2464,21 +2466,38 @@ function initAtlasPlatform() {
           const valBadge = pat.validation_status === 'Analyst Confirmed' ? 'success' : (pat.validation_status === 'Analyst Rejected' ? 'error' : 'info');
           
           let noveltyBadge = 'Known';
-          if (pat.nsf_novelty > 0.4) noveltyBadge = 'Novel';
-          else if (pat.nsf_novelty > 0.15) noveltyBadge = 'Similar';
+          const nsfVal = Number(pat.nsf_novelty || 0);
+          if (nsfVal > 0.4) noveltyBadge = 'Novel';
+          else if (nsfVal > 0.15) noveltyBadge = 'Similar';
 
-          const mitreStr = (pat.mitre_techniques || []).slice(0, 2).join(', ') || 'None';
+          // Extract MITRE techniques whether array, object, or string
+          let mitreList = [];
+          if (Array.isArray(pat.mitre_techniques)) {
+            mitreList = pat.mitre_techniques.map(t => typeof t === 'object' && t ? (t.id || t.name) : t);
+          } else if (typeof pat.mitre_techniques === 'object' && pat.mitre_techniques !== null) {
+            const obs = (pat.mitre_techniques.observed || []).map(t => typeof t === 'object' && t ? (t.id || t.name) : t);
+            const inf = (pat.mitre_techniques.inferred || []).map(t => typeof t === 'object' && t ? (t.id || t.name) : t);
+            mitreList = obs.length > 0 ? obs : inf;
+          }
+          const mitreStr = mitreList.slice(0, 2).join(', ') || 'None';
+
+          const bsfStr = (pat.bsf_similarity !== null && pat.bsf_similarity !== undefined && !isNaN(Number(pat.bsf_similarity)))
+            ? Number(pat.bsf_similarity).toFixed(1) + '%'
+            : 'N/A';
+          const ccfStr = (pat.ccf_confidence !== null && pat.ccf_confidence !== undefined && !isNaN(Number(pat.ccf_confidence)))
+            ? Number(pat.ccf_confidence).toFixed(1) + '%'
+            : 'Not calibrated';
 
           row.innerHTML = `
-            <td class="font-mono" style="font-weight:700;">${pat.pattern_id}</td>
-            <td><span class="pill-badge ${classBadge}">${pat.classification}</span></td>
+            <td class="font-mono" style="font-weight:700;">${pat.pattern_id || '--'}</td>
+            <td><span class="pill-badge ${classBadge}">${pat.classification || 'Unknown'}</span></td>
             <td><span class="pill-badge ${noveltyBadge === 'Known' ? 'success' : (noveltyBadge === 'Novel' ? 'error' : 'warning')}" style="font-size:0.65rem;">${noveltyBadge}</span></td>
-            <td style="font-weight:700; color:var(--color-blue);">${pat.bsf_similarity ? pat.bsf_similarity.toFixed(1) + '%' : 'N/A'}</td>
-            <td style="font-weight:700;">${pat.ccf_confidence ? pat.ccf_confidence.toFixed(1) + '%' : 'Not calibrated'}</td>
+            <td style="font-weight:700; color:var(--color-blue);">${bsfStr}</td>
+            <td style="font-weight:700;">${ccfStr}</td>
             <td class="font-mono text-secondary">${mitreStr}</td>
             <td class="text-secondary" style="max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${pat.campaign || 'Unassociated'}</td>
             <td style="text-align:center;">${pat.observation_count || 1}</td>
-            <td><span class="pill-badge ${valBadge}" style="font-size:0.65rem;">${pat.validation_status}</span></td>
+            <td><span class="pill-badge ${valBadge}" style="font-size:0.65rem;">${pat.validation_status || 'Unreviewed'}</span></td>
           `;
 
           row.addEventListener('click', () => {
@@ -2498,7 +2517,7 @@ function initAtlasPlatform() {
       }
     } catch (e) {
       console.warn("Failed to load KB patterns", e);
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:1rem; color:var(--color-red);">Failed to connect to Knowledge Base service.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:1rem; color:var(--color-red);">Failed to connect to Knowledge Base service: ${e.message || e}</td></tr>`;
     }
   }
 

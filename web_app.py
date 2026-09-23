@@ -2678,9 +2678,18 @@ def get_knowledge_patterns():
         query = request.args.get('query', '').strip()
         classification = request.args.get('classification', 'All')
         validation = request.args.get('validation', 'All')
-        min_similarity = float(request.args.get('min_similarity', 0.0))
-        page = max(1, int(request.args.get('page', 1)))
-        page_size = min(100, max(1, int(request.args.get('page_size', 20))))
+        try:
+            min_similarity = float(request.args.get('min_similarity', 0.0) or 0.0)
+        except (ValueError, TypeError):
+            min_similarity = 0.0
+        try:
+            page = max(1, int(request.args.get('page', 1) or 1))
+        except (ValueError, TypeError):
+            page = 1
+        try:
+            page_size = min(100, max(1, int(request.args.get('page_size', 20) or 20)))
+        except (ValueError, TypeError):
+            page_size = 20
 
         res = database.get_behavior_patterns(
             query=query, classification=classification, validation=validation,
