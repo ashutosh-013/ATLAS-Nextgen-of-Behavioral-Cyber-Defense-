@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: atlas-cyber-defense
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python web_app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ATLAS_DATA_DIR
+        value: /tmp/atlas_data

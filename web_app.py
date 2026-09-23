@@ -9,6 +9,7 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
 import os
+import sys
 from pathlib import Path
 from main import BADNAAnalysisOrchestrator
 from datetime import datetime
@@ -112,10 +113,33 @@ def sse_event_stream():
     return Response(event_generator(), mimetype='text/event-stream')
 
 
+def get_frontend_dir() -> str:
+    """Resolve absolute path to frontend assets across development, frozen, and installed modes."""
+    # 1. If frozen executable (PyInstaller)
+    if getattr(sys, 'frozen', False):
+        base = getattr(sys, '_MEIPASS', Path(sys.executable).parent)
+        candidates = [
+            Path(base) / "frontend",
+            Path(sys.executable).parent / "frontend",
+            Path(sys.executable).parent / "_internal" / "frontend",
+            Path(base) / "_internal" / "frontend",
+        ]
+        for c in candidates:
+            if c.exists() and (c / "index.html").exists():
+                return str(c)
+    # 2. Local development mode
+    dev_path = Path(__file__).parent / "frontend"
+    if dev_path.exists():
+        return str(dev_path)
+    return str(Path.cwd() / "frontend")
+
+FRONTEND_DIR = get_frontend_dir()
+
+
 @app.route('/')
 def index():
     """Render main dashboard directly from frontend folder."""
-    resp = send_from_directory('frontend', 'index.html')
+    resp = send_from_directory(FRONTEND_DIR, 'index.html')
     resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     return resp
 
@@ -123,7 +147,7 @@ def index():
 @app.route('/styles.css')
 def serve_styles():
     """Serve the CSS stylesheet."""
-    resp = send_from_directory('frontend', 'styles.css')
+    resp = send_from_directory(FRONTEND_DIR, 'styles.css')
     resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     return resp
 
@@ -131,7 +155,7 @@ def serve_styles():
 @app.route('/app.js')
 def serve_app_js():
     """Serve the JavaScript application file."""
-    resp = send_from_directory('frontend', 'app.js')
+    resp = send_from_directory(FRONTEND_DIR, 'app.js')
     resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     return resp
 
@@ -141,7 +165,13 @@ def serve_app_js():
 @app.route('/favicon.ico')
 def serve_logo():
     """Serve the ATLAS platform logo/favicon."""
-    return send_from_directory('frontend', 'atlas_logo.jpg')
+    return send_from_directory(FRONTEND_DIR, 'atlas_logo.jpg')
+
+
+@app.route('/frontend/<path:filename>')
+def serve_frontend_static(filename):
+    """Fallback handler for nested frontend static assets."""
+    return send_from_directory(FRONTEND_DIR, filename)
 
 
 
@@ -2871,6 +2901,44 @@ def get_ioc_behavior_correlation(ioc_val):
         })
     except Exception as e:
         return jsonify({'success': False, 'error': {'code': 'INTERNAL_ERROR', 'message': str(e)}}), 500
+
+
+@app.route('/api/smart-scan/start', methods=['POST'])
+@app.route('/api/scan/start', methods=['POST'])
+def start_smart_scan():
+    """Trigger real-time empirical 7-layer host system scan."""
+    try:
+        data = request.get_json(silent=True) or {}
+        scan_type = data.get("scan_type", "FULL")
+        source_mode = data.get("source_mode", "LIVE")
+        scan_id = _smart_scan_engine.start_scan(scan_type=scan_type, source_mode=source_mode)
+        return jsonify({"success": True, "scan_id": scan_id, "message": "System scan started successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/smart-scan/status/<scan_id>', methods=['GET'])
+@app.route('/api/scan/status/<scan_id>', methods=['GET'])
+def get_smart_scan_status(scan_id):
+    """Poll live progress and findings of a running system scan."""
+    try:
+        res = _smart_scan_engine.get_scan_status(scan_id)
+        if not res:
+            return jsonify({"success": False, "error": "Scan ID not found"}), 404
+        return jsonify({"success": True, "scan": res})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/smart-scan/latest', methods=['GET'])
+@app.route('/api/scan/latest', methods=['GET'])
+def get_latest_smart_scan():
+    """Retrieve the latest completed system scan report."""
+    try:
+        res = _smart_scan_engine.get_latest_scan()
+        return jsonify({"success": True, "scan": res})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 if __name__ == '__main__':

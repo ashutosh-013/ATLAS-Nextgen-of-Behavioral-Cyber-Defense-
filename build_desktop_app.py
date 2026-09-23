@@ -103,6 +103,21 @@ def run_pyinstaller_build():
     else:
         print(f"  [!] Warning: Expected output {output_exe} not found.")
 
+    # Ensure frontend and knowledge_base exist directly in dist/ATLAS as well as _internal
+    dist_dir = Path("dist") / "ATLAS"
+    if dist_dir.exists():
+        for asset in ["frontend", "knowledge_base"]:
+            src = Path(asset)
+            dst = dist_dir / asset
+            if src.exists():
+                if dst.exists():
+                    shutil.rmtree(dst)
+                shutil.copytree(src, dst)
+                print(f"  [OK] Synced {asset}/ into {dst}")
+        if Path("config.json").exists():
+            shutil.copy("config.json", dist_dir / "config.json")
+
+
 
 def build_inno_setup_installer():
     """Locate Inno Setup compiler and compile setup wizard if installed."""

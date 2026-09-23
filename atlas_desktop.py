@@ -75,6 +75,37 @@ def start_backend_server():
     )
 
 
+def start_live_host_agent():
+    """
+    Spawns real-time differential process monitoring, telemetry dispatch,
+    and decoy honeypot listeners in protected background daemon threads.
+    Protects user's PC with adaptive thresholds to prevent high CPU or memory usage.
+    """
+    try:
+        import atlas_agent
+        print("[ATLAS Desktop] Starting real-time host protection daemon...")
+        
+        # 1. Telemetry dispatcher
+        t_dispatch = threading.Thread(target=atlas_agent.run_telemetry_dispatcher, daemon=True, name="TelemetryDispatcher")
+        t_dispatch.start()
+        
+        # 2. Continuous differential process scanner
+        t_scanner = threading.Thread(target=atlas_agent.run_continuous_process_scanner, daemon=True, name="LiveProcessScanner")
+        t_scanner.start()
+        
+        # 3. Decoy honeypot listeners on safe ports
+        for port in [2222, 4455, 8080]:
+            try:
+                t_honey = threading.Thread(target=atlas_agent.run_honeypot_listener, args=(port,), daemon=True, name=f"Honeypot-{port}")
+                t_honey.start()
+            except Exception as e:
+                pass
+                
+        print("[ATLAS Desktop] Real-time host protection active.")
+    except Exception as e:
+        print(f"[ATLAS Desktop] Could not start live host agent: {e}")
+
+
 def launch_native_window():
     """
     Launch native desktop application window.
@@ -86,9 +117,17 @@ def launch_native_window():
     try:
         import webview
         print("[ATLAS Desktop] Launching native window via pywebview (WebView2)...")
-        icon_path = Path(__file__).parent / "frontend" / "atlas_logo.ico"
-        if not icon_path.exists():
-            icon_path = Path(__file__).parent / "frontend" / "atlas_logo.jpg"
+        candidates = [
+            Path(__file__).parent / "frontend" / "atlas_logo.ico",
+            Path(__file__).parent / "_internal" / "frontend" / "atlas_logo.ico",
+            Path(sys.executable).parent / "frontend" / "atlas_logo.ico",
+            Path(sys.executable).parent / "_internal" / "frontend" / "atlas_logo.ico",
+        ]
+        icon_path = None
+        for c in candidates:
+            if c.exists():
+                icon_path = str(c)
+                break
             
         window = webview.create_window(
             title=APP_TITLE,
@@ -151,6 +190,10 @@ def main():
     # Wait until server is accepting requests
     if not wait_for_server(BASE_URL, timeout=15.0):
         print("[ATLAS Desktop] Warning: Backend server took longer than expected to bind.")
+
+    # Start live host protection agent (process scanner, telemetry stream, honeypot)
+    agent_thread = threading.Thread(target=start_live_host_agent, daemon=True)
+    agent_thread.start()
 
     # Launch GUI window
     launch_native_window()
