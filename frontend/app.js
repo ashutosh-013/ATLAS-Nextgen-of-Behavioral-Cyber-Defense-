@@ -2500,16 +2500,38 @@ function initAtlasPlatform() {
           if (nsfVal > 0.4) noveltyBadge = 'Novel';
           else if (nsfVal > 0.15) noveltyBadge = 'Similar';
 
-          // Extract MITRE techniques whether array, object, or string
+          // Extract MITRE techniques whether array of strings, array of objects, object with observed/inferred, or string
           let mitreList = [];
           if (Array.isArray(pat.mitre_techniques)) {
-            mitreList = pat.mitre_techniques.map(t => typeof t === 'object' && t ? (t.id || t.name) : t);
+            mitreList = pat.mitre_techniques.map(t => {
+              if (typeof t === 'object' && t !== null) return t.id || t.name || JSON.stringify(t);
+              return String(t);
+            });
           } else if (typeof pat.mitre_techniques === 'object' && pat.mitre_techniques !== null) {
-            const obs = (pat.mitre_techniques.observed || []).map(t => typeof t === 'object' && t ? (t.id || t.name) : t);
-            const inf = (pat.mitre_techniques.inferred || []).map(t => typeof t === 'object' && t ? (t.id || t.name) : t);
+            const obs = (Array.isArray(pat.mitre_techniques.observed) ? pat.mitre_techniques.observed : []).map(t => {
+              if (typeof t === 'object' && t !== null) return t.id || t.name || JSON.stringify(t);
+              return String(t);
+            });
+            const inf = (Array.isArray(pat.mitre_techniques.inferred) ? pat.mitre_techniques.inferred : []).map(t => {
+              if (typeof t === 'object' && t !== null) return t.id || t.name || JSON.stringify(t);
+              return String(t);
+            });
             mitreList = obs.length > 0 ? obs : inf;
+          } else if (typeof pat.mitre_techniques === 'string' && pat.mitre_techniques.trim()) {
+            try {
+              const parsed = JSON.parse(pat.mitre_techniques);
+              if (Array.isArray(parsed)) {
+                mitreList = parsed.map(t => typeof t === 'object' && t ? (t.id || t.name) : String(t));
+              } else if (typeof parsed === 'object' && parsed !== null) {
+                const obs = (parsed.observed || []).map(t => typeof t === 'object' && t ? (t.id || t.name) : String(t));
+                const inf = (parsed.inferred || []).map(t => typeof t === 'object' && t ? (t.id || t.name) : String(t));
+                mitreList = obs.length > 0 ? obs : inf;
+              }
+            } catch (_) {
+              mitreList = pat.mitre_techniques.split(',').map(s => s.trim()).filter(Boolean);
+            }
           }
-          const mitreStr = mitreList.slice(0, 2).join(', ') || 'None';
+          const mitreStr = (Array.isArray(mitreList) ? mitreList.slice(0, 2).join(', ') : '') || 'None';
 
           const bsfStr = (pat.bsf_similarity !== null && pat.bsf_similarity !== undefined && !isNaN(Number(pat.bsf_similarity)))
             ? Number(pat.bsf_similarity).toFixed(1) + '%'
@@ -2535,14 +2557,22 @@ function initAtlasPlatform() {
             rows.forEach(r => r.style.backgroundColor = '');
             row.style.backgroundColor = 'rgba(59,130,246,0.12)';
             kbState.selectedPattern = pat;
-            showBehaviorDnaProfile(pat);
+            try {
+              showBehaviorDnaProfile(pat);
+            } catch (err) {
+              console.warn("Error showing profile:", err);
+            }
           });
 
           tbody.appendChild(row);
         });
 
         if (kbState.selectedPattern) {
-          showBehaviorDnaProfile(kbState.selectedPattern);
+          try {
+            showBehaviorDnaProfile(kbState.selectedPattern);
+          } catch (err) {
+            console.warn("Initial pattern render warning:", err);
+          }
         }
       }
     } catch (e) {
@@ -4364,8 +4394,12 @@ function initAtlasPlatform() {
         
         // Populate Knowledge Base info badge
         const s = data.status;
-        const kbText = `${s.knowledge_base_size} Patterns, ${s.campaigns} Campaigns`;
-        document.getElementById('lbl-status-kb').textContent = kbText;
+        const kbText = `${s.knowledge_base_size} Patterns`;
+        const kbEl = document.getElementById('lbl-status-kb');
+        if (kbEl) {
+          kbEl.textContent = kbText;
+          kbEl.title = `${s.knowledge_base_size} Patterns across ${s.campaigns} Campaigns`;
+        }
         
         // Update firewall status badge
         const fwStatus = document.getElementById('tpot-firewall-status');
@@ -4401,8 +4435,12 @@ function initAtlasPlatform() {
         document.getElementById('lbl-status-core').style.color = 'var(--color-green)';
         
         const s = statusData.status;
-        const kbText = `${s.knowledge_base_size} Patterns, ${s.campaigns} Campaigns`;
-        document.getElementById('lbl-status-kb').textContent = kbText;
+        const kbText = `${s.knowledge_base_size} Patterns`;
+        const kbEl = document.getElementById('lbl-status-kb');
+        if (kbEl) {
+          kbEl.textContent = kbText;
+          kbEl.title = `${s.knowledge_base_size} Patterns across ${s.campaigns} Campaigns`;
+        }
         
         // Update firewall status badge
         const fwStatus = document.getElementById('tpot-firewall-status');
@@ -8122,6 +8160,18 @@ function initAtlasPlatform() {
   }
 
   // Initialize SSE stream
+  // Setup top nav smooth horizontal scroll and start position
+  const navContainer = document.querySelector('.nav-links');
+  if (navContainer) {
+    navContainer.scrollLeft = 0;
+    navContainer.addEventListener('wheel', (e) => {
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+        navContainer.scrollLeft += e.deltaY;
+      }
+    }, { passive: false });
+  }
+
   initLiveEventStream();
 
   // Adaptive, throttled background polling loop with visibility awareness
