@@ -51,10 +51,14 @@ def main():
         }
     ]
     
+    # Clear previous matches for clear tracking
+    orchestrator.knowledge_base.ioc_matches.clear()
+    
     profile_benign = orchestrator.analyze_events(benign_events)
     print(f"    - Inferred Threat Class: {profile_benign.threat_classification.threat_class}")
     print(f"    - Ensemble Confidence Score: {profile_benign.threat_classification.confidence:.4f}")
-    print(f"    - Match IOC Alerts Raised: {len(orchestrator.knowledge_base.ioc_matches)}")
+    benign_ioc_count = len(profile_benign.metadata.get("ioc_matches", []))
+    print(f"    - Match IOC Alerts Raised: {benign_ioc_count}")
     print("-" * 65)
     
     # 2. Scan Suspicious Event Stream containing matching signatures (mimikatz, Run Key Registry)

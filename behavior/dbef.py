@@ -176,8 +176,11 @@ class DBEFEngine:
         # Initialize transition matrix
         transition_matrix = np.zeros((matrix_size, matrix_size))
         
-        # Create feature-based transition probabilities
-        # Use feature values to model behavioral transition likelihoods
+        # Create feature-based transition probabilities using Gaussian RBF affinity kernel
+        # Grounded in spectral graph theory (Laplacian Eigenmaps / Diffusion Maps)
+        sigma = 0.5  # Kernel bandwidth parameter for behavioral feature state diffusion
+        gamma = 1.0 / (2.0 * sigma * sigma)
+        
         for i in range(matrix_size):
             for j in range(matrix_size):
                 if i != j:
@@ -185,16 +188,13 @@ class DBEFEngine:
                     feature_i = features.features[i] if i < len(features.features) else 0.0
                     feature_j = features.features[j] if j < len(features.features) else 0.0
                     
-                    # Transition probability based on feature relationship
-                    # Higher similarity → higher transition probability
-                    feature_similarity = 1.0 - abs(feature_i - feature_j)
-                    
-                    # Add small random component for deterministic diversity
-                    # Use feature indices for reproducible randomness
-                    deterministic_noise = 0.1 * np.sin(i * 7 + j * 13) ** 2
-                    
-                    transition_prob = 0.8 * feature_similarity + 0.2 * deterministic_noise
-                    transition_matrix[i, j] = max(0.0, transition_prob)
+                    # Mathematical Gaussian RBF transition likelihood: K(x_i, x_j) = exp(-gamma * (x_i - x_j)^2)
+                    diff = feature_i - feature_j
+                    transition_prob = float(np.exp(-gamma * (diff * diff)))
+                    transition_matrix[i, j] = transition_prob
+                else:
+                    # Self-loop probability for continuous state permanence
+                    transition_matrix[i, i] = 1.0
         
         # Make matrix stochastic (rows sum to 1)
         row_sums = np.sum(transition_matrix, axis=1)

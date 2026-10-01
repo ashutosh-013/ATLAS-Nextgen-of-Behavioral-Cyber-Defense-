@@ -294,7 +294,7 @@ if __name__ == "__main__":
     }
     
     # Create parser
-    dataset_path = Path("e:/BADNA/datasets/CTU-13-Dataset")
+    dataset_path = Path(__file__).resolve().parent.parent.parent / "datasets" / "CTU-13-Dataset"
     parser = create_ctu13_parser(dataset_path)
     
     # Parse sample

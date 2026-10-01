@@ -222,17 +222,17 @@ python main.py test
 python tpot_live_service.py --port 514 --protocol UDP
 ```
 
-### Option D: Standalone Desktop Application & Installer
+### Option D: Standalone Desktop Application & Windows Setup (.exe)
 ```bash
-# Launch native desktop application (frameless 60 FPS window)
+# Launch native desktop application directly from source (frameless desktop window)
 python atlas_desktop.py
 
-# Or build standalone executable and Inno Setup installer (.exe)
+# Or build the standalone executable and Inno Setup installer (.exe)
 python build_desktop_app.py
 ```
-* **Executable Distribution**: `dist/ATLAS/ATLAS.exe`
-* **Windows Setup Wizard**: `dist_installer/ATLAS_v2.5_Enterprise_Setup.exe`
-* **Zero-Crash Storage Isolation**: Directs SQLite database and logs to `%LOCALAPPDATA%\ATLAS\` ensuring write permissions even when installed into `Program Files`.
+* **Single Double-Click Installer**: Download `ATLAS_v2.5_Enterprise_Setup.exe` directly from [GitHub Releases](https://github.com/ashutosh-013/ATLAS-Nextgen-of-Behavioral-Cyber-Defense-/releases) (run on any Windows 10/11 system without installing Python).
+* **Compiled Executable**: `dist/ATLAS/ATLAS.exe`
+* **Zero-Crash Storage Isolation**: Directs SQLite database and runtime telemetry to `%LOCALAPPDATA%\ATLAS\` ensuring seamless write permissions even when installed into `Program Files`.
 
 
 ---

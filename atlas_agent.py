@@ -251,7 +251,282 @@ def run_honeypot_listener(port):
             t = threading.Thread(target=handle_honeypot_connection, args=(conn, addr, port), daemon=True)
             t.start()
         except Exception:
+            time.sleep(0.5)
+
+def watch_directory_win32_kernel(wdir: str):
+    """Event-driven Windows kernel filesystem change listener using ReadDirectoryChangesW."""
+    if os.name != "nt":
+        return
+
+    import ctypes
+    from ctypes import wintypes
+    import struct
+    import hashlib
+
+    kernel32 = ctypes.windll.kernel32
+    FILE_LIST_DIRECTORY = 0x0001
+    FILE_SHARE_READ = 0x00000001
+    FILE_SHARE_WRITE = 0x00000002
+    FILE_SHARE_DELETE = 0x00000004
+    OPEN_EXISTING = 3
+    FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
+    NOTIFY_FILTERS = 0x00000001 | 0x00000002 | 0x00000008 | 0x00000010  # Name, Dir, Size, LastWrite
+
+    suspicious_exts = {'.exe', '.bat', '.ps1', '.vbs', '.js', '.dll', '.scr', '.hta', '.lockbit', '.wannacry'}
+
+    try:
+        h_dir = kernel32.CreateFileW(
+            wdir,
+            FILE_LIST_DIRECTORY,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            None,
+            OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS,
+            None
+        )
+        if h_dir == -1 or h_dir == 0:
+            return
+    except Exception:
+        return
+
+    buf = ctypes.create_string_buffer(65536)
+    bytes_ret = wintypes.DWORD()
+
+    try:
+        while True:
+            success = kernel32.ReadDirectoryChangesW(
+                h_dir,
+                buf,
+                len(buf),
+                True,  # watch subtree
+                NOTIFY_FILTERS,
+                ctypes.byref(bytes_ret),
+                None,
+                None
+            )
+            if not success or bytes_ret.value == 0:
+                time.sleep(0.5)
+                continue
+
+            offset = 0
+            while True:
+                next_offset, action, fn_len = struct.unpack_from("III", buf, offset)
+                fn_bytes = buf[offset + 12 : offset + 12 + fn_len]
+                fname = fn_bytes.decode("utf-16le", errors="ignore")
+                fpath = os.path.join(wdir, fname)
+                ext = os.path.splitext(fname)[1].lower()
+                is_canary = fname.startswith(".atlas_decoy")
+
+                action_str = "create" if action == 1 else "delete" if action == 2 else "modify" if action == 3 else "rename"
+
+                if ext in suspicious_exts or is_canary or "temp" in wdir.lower():
+                    fhash = "UNKNOWN"
+                    fsize = 0
+                    if action_str in ("create", "modify") and os.path.exists(fpath):
+                        try:
+                            fsize = os.path.getsize(fpath)
+                            if fsize < 10 * 1024 * 1024:
+                                with open(fpath, "rb") as f:
+                                    fhash = hashlib.sha256(f.read()).hexdigest()
+                        except Exception:
+                            pass
+
+                    enqueue_telemetry_event(
+                        "file",
+                        {
+                            "path": fpath,
+                            "name": fname,
+                            "action": action_str,
+                            "size": fsize,
+                            "sha256": fhash,
+                            "is_canary": is_canary,
+                            "kernel_hook": "ReadDirectoryChangesW"
+                        }
+                    )
+
+                if next_offset == 0:
+                    break
+                offset += next_offset
+    except Exception:
+        pass
+    finally:
+        try:
+            kernel32.CloseHandle(h_dir)
+        except Exception:
             pass
+
+
+def run_continuous_filesystem_monitor():
+    """Continuously observe drop and canary paths for suspicious file activity using kernel events with polling fallback."""
+    print("[+] Starting Real-Time Kernel Event & Canary Filesystem Monitor...")
+    import hashlib
+
+    watch_dirs = []
+    user_home = os.path.expanduser("~")
+    for d in [
+        os.environ.get("TEMP"),
+        os.path.join(user_home, "Downloads"),
+        os.path.join(user_home, "Desktop"),
+        os.path.join(user_home, "Documents")
+    ]:
+        if d and os.path.exists(d):
+            watch_dirs.append(d)
+
+    # Spawn Win32 kernel event listener thread for each directory
+    if os.name == "nt":
+        for wdir in watch_dirs:
+            t = threading.Thread(target=watch_directory_win32_kernel, args=(wdir,), daemon=True)
+            t.start()
+
+    known_state = {}
+    for wdir in watch_dirs:
+        try:
+            for entry in os.scandir(wdir):
+                if entry.is_file(follow_symlinks=False):
+                    try:
+                        stat = entry.stat()
+                        known_state[entry.path] = (stat.st_mtime, stat.st_size)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+    suspicious_exts = {'.exe', '.bat', '.ps1', '.vbs', '.js', '.dll', '.scr', '.hta', '.lockbit', '.wannacry'}
+
+    while True:
+        try:
+            current_state = {}
+            for wdir in watch_dirs:
+                try:
+                    for entry in os.scandir(wdir):
+                        if entry.is_file(follow_symlinks=False):
+                            try:
+                                stat = entry.stat()
+                                p = entry.path
+                                current_state[p] = (stat.st_mtime, stat.st_size)
+
+                                if p not in known_state:
+                                    ext = os.path.splitext(p)[1].lower()
+                                    fname = entry.name
+                                    is_canary = fname.startswith(".atlas_decoy")
+                                    if ext in suspicious_exts or is_canary or "temp" in wdir.lower():
+                                        fhash = "UNKNOWN"
+                                        if stat.st_size < 10 * 1024 * 1024:
+                                            try:
+                                                with open(p, "rb") as f:
+                                                    fhash = hashlib.sha256(f.read()).hexdigest()
+                                            except Exception:
+                                                pass
+                                        enqueue_telemetry_event(
+                                            "file",
+                                            {
+                                                "path": p,
+                                                "name": fname,
+                                                "action": "create",
+                                                "size": stat.st_size,
+                                                "sha256": fhash,
+                                                "is_canary": is_canary
+                                            }
+                                        )
+                                else:
+                                    prev_mtime, prev_size = known_state[p]
+                                    if stat.st_mtime != prev_mtime:
+                                        fname = entry.name
+                                        is_canary = fname.startswith(".atlas_decoy")
+                                        if is_canary or stat.st_size != prev_size:
+                                            enqueue_telemetry_event(
+                                                "file",
+                                                {
+                                                    "path": p,
+                                                    "name": fname,
+                                                    "action": "modify",
+                                                    "size": stat.st_size,
+                                                    "is_canary": is_canary
+                                                }
+                                            )
+                            except Exception:
+                                pass
+                except Exception:
+                    pass
+
+            deleted = set(known_state.keys()) - set(current_state.keys())
+            for dp in deleted:
+                fname = os.path.basename(dp)
+                if fname.startswith(".atlas_decoy"):
+                    enqueue_telemetry_event("file", {"path": dp, "name": fname, "action": "delete", "is_canary": True})
+
+            known_state = current_state
+            time.sleep(3.0)
+        except Exception:
+            time.sleep(3.0)
+
+
+def run_continuous_amsi_script_monitor():
+    """Monitor Windows PowerShell Script Block execution (Event ID 4104) and inspect via AMSI."""
+    if os.name != "nt":
+        return
+
+    print("[+] Starting Real-Time AMSI Script Block Logging Ingestion Engine...")
+    try:
+        from intelligence.amsi_scanner import AMSIScanner
+        amsi = AMSIScanner()
+    except Exception as e:
+        print(f"[!] AMSI Scanner import warning: {e}")
+        return
+
+    last_check = datetime.now()
+    seen_ids = set()
+
+    while True:
+        try:
+            # Query recent 4104 Script Block events via PowerShell
+            ps_cmd = (
+                "try { "
+                "  Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-PowerShell/Operational'; Id=4104} -MaxEvents 5 -ErrorAction Stop | "
+                "  ForEach-Object { [PSCustomObject]@{ Id=$_.RecordId; Time=$_.TimeCreated.ToString('o'); Msg=$_.Message } } | "
+                "  ConvertTo-Json -Compress "
+                "} catch { '[]' }"
+            )
+            res = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_cmd], capture_output=True, text=True, timeout=8)
+            output = res.stdout.strip()
+
+            if output and output != "[]":
+                try:
+                    records = json.loads(output)
+                    if isinstance(records, dict):
+                        records = [records]
+
+                    for rec in records:
+                        rec_id = rec.get("Id")
+                        if rec_id and rec_id not in seen_ids:
+                            seen_ids.add(rec_id)
+                            msg = rec.get("Msg", "")
+                            
+                            # Inspect script buffer with AMSI
+                            scan_res = amsi.scan_string(msg, content_name=f"ScriptBlock_{rec_id}")
+                            
+                            if scan_res.is_malicious or scan_res.amsi_result_code == 32768 or scan_res.risk_score > 0.5:
+                                enqueue_telemetry_event(
+                                    "process",
+                                    {
+                                        "name": "powershell.exe",
+                                        "command_line": msg[:500],
+                                        "amsi_detected": True,
+                                        "threat_name": scan_res.threat_name or "AMSI.MaliciousScriptBlock",
+                                        "risk_score": scan_res.risk_score,
+                                        "action": "script_execute"
+                                    }
+                                )
+                except Exception:
+                    pass
+
+            if len(seen_ids) > 1000:
+                seen_ids.clear()
+
+            time.sleep(4.0)
+        except Exception:
+            time.sleep(4.0)
+
 
 def main():
     print("=" * 70)
@@ -265,8 +540,16 @@ def main():
     # 1. Run Differential Process Scanner thread
     scanner_thread = threading.Thread(target=run_continuous_process_scanner, daemon=True)
     scanner_thread.start()
+
+    # 2. Run Real-Time Filesystem & Canary Activity Monitor thread
+    fs_thread = threading.Thread(target=run_continuous_filesystem_monitor, daemon=True)
+    fs_thread.start()
     
-    # 2. Run T-Pot Honeypot Listeners (decoy SSH/2222, SMB/4455, HTTP-Honeytrap/8080)
+    # 3. Run Real-Time AMSI Script Block Logging Ingestion thread
+    amsi_thread = threading.Thread(target=run_continuous_amsi_script_monitor, daemon=True)
+    amsi_thread.start()
+
+    # 4. Run T-Pot Honeypot Listeners (decoy SSH/2222, SMB/4455, HTTP-Honeytrap/8080)
     decoy_ports = [2222, 4455, 8080]
     for port in decoy_ports:
         t = threading.Thread(target=run_honeypot_listener, args=(port,), daemon=True)

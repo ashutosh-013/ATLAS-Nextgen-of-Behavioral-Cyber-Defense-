@@ -56,7 +56,7 @@ class IOCRepository:
         if storage_path:
             self.storage_path = Path(storage_path)
         else:
-            self.storage_path = Path("e:/BADNA/datasets/ioc_repository.json")
+            self.storage_path = Path(__file__).resolve().parent.parent / "datasets" / "ioc_repository.json"
             
         self._load_from_disk()
         self._seed_default_indicators()
@@ -64,11 +64,11 @@ class IOCRepository:
     def _seed_default_indicators(self) -> None:
         """Seed baseline known-bad indicators if empty."""
         with self.lock:
-            # Seed hashes
+            # Seed hashes (authentic malware signatures, zero-byte hash strictly excluded)
             seed_hashes = [
                 ("32c37c352802fb20004fa14053ac13134f31aff747dc0a2962da2ea1ea894d74", "Ransomware.WannaCry"),
                 ("0004cec68fdb95507c6161d84e4965db60f997a679ce20786075992f1e5b340c", "Trojan.SOREL"),
-                ("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "HackTool.Mimikatz")
+                ("a9359e0a0d922119c4d9ad638d172fe4d509f635677c7b640822f3fcfdcf351b", "HackTool.Mimikatz")
             ]
             for h, fam in seed_hashes:
                 if h.lower() not in self.file_hashes:

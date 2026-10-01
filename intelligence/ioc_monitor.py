@@ -70,7 +70,7 @@ class IOCMonitorEngine:
     def _initialize_database(self) -> None:
         """Load default signatures and local databases on start"""
         # Load local CISA KEV if exists
-        kev_path = Path("e:/BADNA/datasets/known_exploited_vulnerabilities.csv")
+        kev_path = Path(__file__).resolve().parent.parent / "datasets" / "known_exploited_vulnerabilities.csv"
         if kev_path.exists():
             try:
                 parser = create_cisa_kev_parser(kev_path)
@@ -189,7 +189,7 @@ class IOCMonitorEngine:
     def _update_daily_feeds(self) -> None:
         """Fetch daily updates (CISA KEV)"""
         logger.info("Scheduler: Fetching daily CISA KEV updates...")
-        kev_path = Path("e:/BADNA/datasets/known_exploited_vulnerabilities.csv")
+        kev_path = Path(__file__).resolve().parent.parent / "datasets" / "known_exploited_vulnerabilities.csv"
         if kev_path.exists():
             try:
                 parser = create_cisa_kev_parser(kev_path)

@@ -68,9 +68,10 @@ def test_database_persistence_and_audit_log():
     assert database.get_setting("general.instance_name") == "ATLAS-SOC-TEST-NODE"
 
     # Audit log verification
-    logs = database.get_settings_audit_log(limit=10)
-    assert len(logs) > 0
-    latest_log = logs[0]
+    logs = database.get_settings_audit_log(limit=20, module="general")
+    matching_logs = [l for l in logs if l.get("setting_key") == "general.instance_name"]
+    assert len(matching_logs) > 0
+    latest_log = matching_logs[0]
     assert latest_log["setting_key"] == "general.instance_name"
     assert latest_log["new_value"] == "ATLAS-SOC-TEST-NODE"
     assert latest_log["actor"] == "Lead_Auditor"

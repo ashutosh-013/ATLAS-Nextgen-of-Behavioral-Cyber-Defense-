@@ -109,6 +109,13 @@ class BADNAAnalysisOrchestrator:
             self.adaptive_defense = AdaptiveDefenseIntelligence()
             self.ioc_monitor = IOCMonitorEngine(self.knowledge_base)
             self.ioc_monitor.start_scheduler()
+            from intelligence.threat_intel_fusion import ThreatIntelFusionEngine
+            self.threat_intel_fusion = ThreatIntelFusionEngine(self.knowledge_base)
+            try:
+                from learning.evolution import ModelEvolution
+                self.model_evolution = ModelEvolution(self.knowledge_base)
+            except Exception as ev_err:
+                self.logger.log_operation("WARNING", f"ModelEvolution init warning: {ev_err}", component="BADNAOrchestrator")
             # Enterprise NGAV Upgrade Engines
             self.pre_filter = StaticPreFilterEngine()
             self.authenticode_engine = AuthenticodeEngine()
@@ -176,6 +183,11 @@ class BADNAAnalysisOrchestrator:
                 profile_id=profile.profile_id
             )
             
+            # Data Privacy Sanitization: Redact sensitive passwords, tokens, and PII from telemetry
+            from privacy.sanitizer import get_privacy_engine
+            privacy_engine = get_privacy_engine()
+            sanitized_events = [privacy_engine.sanitize_event_dict(e) for e in raw_events]
+
             # Continuous IOC & Signature Monitoring (Runs in parallel with behavior capture)
             ioc_matches = []
             for event in raw_events:
@@ -186,7 +198,7 @@ class BADNAAnalysisOrchestrator:
                 profile.metadata["ioc_matches"] = ioc_matches
             
             # STEP 1: Events → Behavior Graph (Behavioral Capture Engine)
-            behavior_graph = self._execute_step_1_graph_construction(raw_events)
+            behavior_graph = self._execute_step_1_graph_construction(sanitized_events)
             
             # STEP 2: Graph → 128D Embedding (d-BEF)  
             embedding = self._execute_step_2_embedding_generation(behavior_graph)
@@ -227,7 +239,15 @@ class BADNAAnalysisOrchestrator:
             # STEP 8: Generate Defense Recommendations (Adaptive Defense Intelligence)
             defense_recommendations = self._execute_step_8_defense_recommendations(profile)
             
-            # STEP 9: Finalize profile with metadata
+            # STEP 9: Finalize profile with metadata and Threat Intelligence context
+            try:
+                enriched = self.threat_intel_fusion.enrich_profile(profile)
+                if not hasattr(profile, 'metadata') or profile.metadata is None:
+                    profile.metadata = {}
+                profile.metadata["threat_intel_context"] = enriched.threat_intel_context
+            except Exception as e:
+                self.logger.log_operation("WARNING", f"Threat intel context enrichment: {e}", component="BADNAOrchestrator")
+
             profile.config = self.config.to_dict()
             profile.timestamp = datetime.now()
             
@@ -275,6 +295,22 @@ class BADNAAnalysisOrchestrator:
                 profile_id=profile.profile_id
             )
             
+            # Autonomous Model Evolution check (satisfying ATLAS Rule #9)
+            try:
+                import threading
+                def _bg_evolution_worker():
+                    try:
+                        if hasattr(self, 'model_evolution') and self.model_evolution is not None:
+                            triggers = self.model_evolution.check_retraining_triggers()
+                            if triggers.get('should_retrain'):
+                                self.logger.log_operation("INFO", f"Autonomous retraining triggered: {triggers}", component="BADNAOrchestrator")
+                                self.model_evolution.retrain_models(triggers)
+                    except Exception:
+                        pass
+                threading.Thread(target=_bg_evolution_worker, daemon=True).start()
+            except Exception:
+                pass
+
             return profile
             
         except Exception as e:
@@ -552,7 +588,12 @@ class BADNAAnalysisOrchestrator:
             # Extract scores
             similarity_score = similarity_result.similarity_score if similarity_result else 0.0
             novelty_score = novelty_result.novelty_score if novelty_result else 1.0
-            confidence_score = confidence_result.confidence_score if confidence_result else 0.5
+            # Calibrate confidence using both CCF campaign calibration and AI classification confidence
+            base_confidence = confidence_result.confidence_score if confidence_result else 0.5
+            if classification and classification.threat_class != "Benign":
+                confidence_score = max(base_confidence, classification.confidence)
+            else:
+                confidence_score = base_confidence
             threat_class = classification.threat_class if classification else "Unknown"
             
             # Detect behavioral patterns from intent

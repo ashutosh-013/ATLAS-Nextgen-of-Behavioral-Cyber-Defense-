@@ -151,7 +151,7 @@ class TPotScenarioEngine:
                     "dest_port": 445,
                     "protocol": "tcp",
                     "file_name": "lockbit_payload.exe",
-                    "sha256_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "sha256_hash": "ed01ebf83334a1f6f1648878522351ce3fb403c6ab8dce5479c419e18cd91f0a",
                     "status": "pending_approval"
                 }
             ]

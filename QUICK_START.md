@@ -4,14 +4,29 @@ Welcome to the **ATLAS Behavioral Cyber-Intelligence Platform**. This guide expl
 
 ---
 
-## ⚡ Option 1: 1-Click Automated Windows Installer (Recommended)
+## ⚡ Option 1: Standalone Windows Setup Installer (.exe) — No Python Needed (Recommended)
 
-1. **Download or Clone the ATLAS folder** to your PC.
-2. **Double-click `install_atlas.bat`**.
+Anyone can run ATLAS without installing Python, Git, or dependencies:
+
+1. **Download `ATLAS_v2.5_Enterprise_Setup.exe`** from the [GitHub Releases](https://github.com/ashutosh-013/ATLAS-Nextgen-of-Behavioral-Cyber-Defense-/releases).
+2. **Double-click `ATLAS_v2.5_Enterprise_Setup.exe`**.
+   - The modern Windows Setup Wizard will install ATLAS into your Program Files.
+   - It creates an **ATLAS Cyber Defense** Desktop icon and Start Menu entry.
+   - Automatically provisions local database storage in `%LOCALAPPDATA%\ATLAS\` to guarantee clean write permissions.
+3. **Launch ATLAS**:
+   - Double-click the desktop icon to launch the native cyber defense platform.
+
+---
+
+## 🛠️ Option 2: 1-Click Automated Batch Setup (From Source)
+
+If you have cloned the repository with source code:
+
+1. **Double-click `install_atlas.bat`**.
    - It will automatically request Administrator permissions (UAC popup) to configure the local Windows Firewall and ETW sensors.
    - It will create an isolated virtual environment (`.venv`), install all required libraries from `requirements.txt`, provision runtime directories, initialize the database, seed the knowledge base, and perform a 7-layer diagnostic pre-flight check.
    - It will place an **"ATLAS Security Platform"** shortcut on your Desktop!
-3. **Double-click the Desktop shortcut (or run `start_atlas.bat`)** to start ATLAS.
+2. **Double-click the Desktop shortcut (or run `start_atlas.bat`)** to start ATLAS.
    - Your default browser will automatically open to `http://localhost:5000/`.
 
 ---

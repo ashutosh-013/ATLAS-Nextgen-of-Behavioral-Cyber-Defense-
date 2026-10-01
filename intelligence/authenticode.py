@@ -70,9 +70,10 @@ class AuthenticodeEngine:
         """Verify Windows Authenticode digital signature using PowerShell CIM/Get-AuthenticodeSignature."""
         try:
             cmd = [
-                "powershell", "-NoProfile", "-Command",
-                f"(Get-AuthenticodeSignature -FilePath '{file_path}').Status.ToString(); "
-                f"(Get-AuthenticodeSignature -FilePath '{file_path}').SignerCertificate.Subject"
+                "powershell", "-NoProfile", "-NonInteractive", "-Command",
+                "param($p); $sig = Get-AuthenticodeSignature -LiteralPath $p; "
+                "if ($sig) { $sig.Status.ToString(); if ($sig.SignerCertificate) { $sig.SignerCertificate.Subject } }",
+                file_path
             ]
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=3)
             output_lines = [line.strip() for line in res.stdout.splitlines() if line.strip()]

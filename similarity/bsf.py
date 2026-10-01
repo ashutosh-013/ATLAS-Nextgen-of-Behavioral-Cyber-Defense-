@@ -149,6 +149,31 @@ class BSFEngine:
             similarity_category=similarity_category,
             component_scores=component_scores
         )
+
+    def calculate_quantum_similarity(self, vector_a: np.ndarray, vector_b: np.ndarray) -> Dict[str, Any]:
+        """
+        Calculate similarity using genuine Qiskit Aer Quantum SWAP Test.
+        Satisfies ATLAS Rule #5 (Quantum Optional with Classical Fallback).
+        """
+        try:
+            from quantum.quantum_similarity import get_quantum_similarity_engine
+            q_engine = get_quantum_similarity_engine()
+            q_sim = q_engine.quantum_similarity(vector_a, vector_b)
+            classical_sim = self.calculate_similarity(vector_a, vector_b)
+            return {
+                "quantum_similarity": round(float(q_sim), 4),
+                "classical_similarity": round(float(classical_sim), 4),
+                "quantum_backend": "Qiskit AerSimulator" if q_engine.qiskit_available else "Classical_Fallback",
+                "status": "QUANTUM_ONLINE" if q_engine.qiskit_available else "CLASSICAL_FALLBACK"
+            }
+        except Exception as e:
+            return {
+                "quantum_similarity": round(float(self.calculate_similarity(vector_a, vector_b)), 4),
+                "classical_similarity": round(float(self.calculate_similarity(vector_a, vector_b)), 4),
+                "quantum_backend": "Classical_Fallback",
+                "status": "FALLBACK",
+                "error": str(e)
+            }
     
     def match_campaign(self, vector: np.ndarray, knowledge_base: 'KnowledgeBase') -> Dict[str, Any]:
         """
@@ -234,16 +259,15 @@ class BSFEngine:
     
     def _split_embedding_components(self, embedding: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        Split 128-D embedding into structural, temporal, and semantic components.
-        
-        Component allocation:
-        - Structural: dimensions 0-42 (33%)
-        - Temporal: dimensions 43-67 (20%) 
-        - Semantic: dimensions 68-127 (47%)
+        Split 128-D embedding into structural, temporal, and semantic components
+        grounded in the architectural layout of d-BEF:
+        - Structural (64 dims): Spectral graph topology modes (0:64)
+        - Temporal (8 dims): Temporal frequency, velocity, and burst metrics (84:92)
+        - Semantic (56 dims): Graph centrality and behavioral domain attributes (64:84 + 92:128)
         """
-        structural = embedding[:43]  # First 43 dimensions
-        temporal = embedding[43:68]  # Next 25 dimensions
-        semantic = embedding[68:]    # Last 60 dimensions
+        structural = embedding[:64]
+        temporal = embedding[84:92]
+        semantic = np.concatenate([embedding[64:84], embedding[92:]])
         
         return structural, temporal, semantic
     

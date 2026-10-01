@@ -435,7 +435,7 @@ if __name__ == "__main__":
     }
     
     # Create parser
-    dataset_path = Path("e:/BADNA/datasets/OpTC-data-master")
+    dataset_path = Path(__file__).resolve().parent.parent.parent / "datasets" / "OpTC-data-master"
     parser = create_darpa_optc_parser(dataset_path)
     
     # Parse sample event

@@ -141,7 +141,7 @@ def test_json_array_parsing():
         print(f"\nCreated sample eCAR file with {num_events} events")
         
         # Create parser
-        dataset_path = Path("e:/BADNA/datasets/OpTC-data-master")
+        dataset_path = Path(__file__).resolve().parent / "datasets" / "OpTC-data-master"
         parser = create_darpa_optc_parser(dataset_path)
         
         # Parse and normalize
@@ -200,7 +200,7 @@ def test_jsonl_parsing():
         print(f"\nCreated sample JSONL file with {num_events} events")
         
         # Create parser
-        dataset_path = Path("e:/BADNA/datasets/OpTC-data-master")
+        dataset_path = Path(__file__).resolve().parent / "datasets" / "OpTC-data-master"
         parser = create_darpa_optc_parser(dataset_path)
         
         # Parse and normalize
@@ -287,7 +287,7 @@ def test_error_handling():
         print("\nCreated file with mixed valid/invalid events")
         
         # Create parser
-        dataset_path = Path("e:/BADNA/datasets/OpTC-data-master")
+        dataset_path = Path(__file__).resolve().parent / "datasets" / "OpTC-data-master"
         parser = create_darpa_optc_parser(dataset_path)
         
         # Parse with validation
@@ -324,7 +324,7 @@ def test_behavior_capture_compatibility():
     print("=" * 80)
     
     # Create parser
-    dataset_path = Path("e:/BADNA/datasets/OpTC-data-master")
+    dataset_path = Path(__file__).resolve().parent / "datasets" / "OpTC-data-master"
     parser = create_darpa_optc_parser(dataset_path)
     
     # Create sample event

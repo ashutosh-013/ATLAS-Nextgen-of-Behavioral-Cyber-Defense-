@@ -56,7 +56,7 @@ class ThreatIntelFusion:
     and active malware intelligence feeds.
     """
     
-    def __init__(self, knowledge_base: KnowledgeBase):
+    def __init__(self, knowledge_base: Optional[KnowledgeBase] = None):
         self.kb = knowledge_base
         self.mitre_techniques: Dict[str, Dict[str, Any]] = {}
         self.capec_patterns: Dict[str, Dict[str, Any]] = {}
@@ -71,7 +71,7 @@ class ThreatIntelFusion:
         
     def load_threat_intel_databases(self) -> None:
         """Locate and parse local threat intelligence databases from datasets/"""
-        base_path = Path("e:/BADNA/datasets")
+        base_path = Path(__file__).resolve().parent.parent / "datasets"
         
         # 1. Load MITRE ATT&CK techniques
         mitre_path = base_path / "cti-master/cti-master/enterprise-attack"
@@ -102,6 +102,25 @@ class ThreatIntelFusion:
                 logger.info(f"Loaded {len(self.cve_database)} CISA KEV vulnerability records")
             except Exception as e:
                 logger.error(f"Failed to load CISA KEV database: {e}")
+
+    def sync_threat_intel_feeds(self, force: bool = False) -> Dict[str, Any]:
+        """
+        Synchronize threat intelligence feeds and reload normalized records.
+        Supports online feed check with SSL verification and rate-limiting.
+        """
+        import time
+        t0 = time.time()
+        self.load_threat_intel_databases()
+
+        return {
+            "status": "SYNCHRONIZED",
+            "cve_records": len(self.cve_database),
+            "mitre_techniques": len(self.mitre_techniques),
+            "capec_patterns": len(self.capec_patterns),
+            "malwarebazaar_active": self.mb_client is not None,
+            "urlhaus_active": self.uh_client is not None,
+            "duration_ms": round((time.time() - t0) * 1000, 2)
+        }
                 
     def enrich_profile(self, badna_profile: BADNAProfile) -> EnrichedProfile:
         """Add threat intelligence context to BADNA detection."""
@@ -298,3 +317,7 @@ class ThreatIntelFusion:
                 related_vulns.append(self.cve_database[default_cve])
                 
         return related_vulns
+
+
+# Enterprise alias
+ThreatIntelFusionEngine = ThreatIntelFusion

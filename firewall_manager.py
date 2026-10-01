@@ -89,40 +89,39 @@ class WindowsNetshEngine(BaseFirewallEngine):
         ports_str = ",".join(str(p) for p in ports)
         
         try:
-            # 1. Allow local loopback traffic
+            # 1. Allow local loopback traffic (IPv4 and IPv6)
             subprocess.run([
                 "netsh", "advfirewall", "firewall", "add", "rule",
-                "name=ATLAS Host Isolation Loopback Allow", "dir=in", "action=allow",
-                "remoteip=127.0.0.1"
+                "name=ATLAS Host Isolation Loopback In", "dir=in", "action=allow",
+                "remoteip=127.0.0.1,::1"
             ], capture_output=True, text=True)
             subprocess.run([
                 "netsh", "advfirewall", "firewall", "add", "rule",
-                "name=ATLAS Host Isolation Loopback Allow", "dir=out", "action=allow",
-                "remoteip=127.0.0.1"
+                "name=ATLAS Host Isolation Loopback Out", "dir=out", "action=allow",
+                "remoteip=127.0.0.1,::1"
             ], capture_output=True, text=True)
             
             # 2. Allow management port pinholes
             subprocess.run([
                 "netsh", "advfirewall", "firewall", "add", "rule",
-                "name=ATLAS Host Isolation Management Allow", "dir=in", "action=allow",
+                "name=ATLAS Host Isolation Management In", "dir=in", "action=allow",
+                "protocol=TCP", f"localport={ports_str}"
+            ], capture_output=True, text=True)
+            subprocess.run([
+                "netsh", "advfirewall", "firewall", "add", "rule",
+                "name=ATLAS Host Isolation Management Out", "dir=out", "action=allow",
                 "protocol=TCP", f"localport={ports_str}"
             ], capture_output=True, text=True)
             
-            # 3. Block all other outbound and inbound traffic
+            # 3. Set default profile policy to block inbound and outbound traffic
+            # In Windows Firewall, explicit allow rules override default profile policies.
             subprocess.run([
-                "netsh", "advfirewall", "firewall", "add", "rule",
-                "name=ATLAS Host Isolation Outbound", "dir=out", "action=block",
-                "remoteip=0.0.0.0/0"
+                "netsh", "advfirewall", "set", "allprofiles", "firewallpolicy",
+                "blockinbound,blockoutbound"
             ], capture_output=True, text=True, check=True)
             
-            subprocess.run([
-                "netsh", "advfirewall", "firewall", "add", "rule",
-                "name=ATLAS Host Isolation Inbound", "dir=in", "action=block",
-                "remoteip=0.0.0.0/0"
-            ], capture_output=True, text=True, check=True)
-            
-            self.logger.info("[+] Enterprise Host Network Isolation successfully engaged with ATLAS pinholes.")
-            return True, "Host isolated successfully (management pinholes preserved)."
+            self.logger.info("[+] Enterprise Host Network Isolation successfully engaged with ATLAS pinholes preserved.")
+            return True, "Host isolated successfully (management and loopback pinholes preserved)."
         except Exception as e:
             self.logger.error(f"[!] Host isolation failed: {e}")
             return False, f"Host isolation failed: {e}"
@@ -131,7 +130,18 @@ class WindowsNetshEngine(BaseFirewallEngine):
         if not self.is_admin():
             return False, "Administrator privilege required to un-isolate host."
         try:
+            # 1. Restore standard profile policy (block inbound, allow outbound)
+            subprocess.run([
+                "netsh", "advfirewall", "set", "allprofiles", "firewallpolicy",
+                "blockinbound,allowoutbound"
+            ], capture_output=True, text=True)
+
+            # 2. Clean up isolation pinhole rules
             for rule_name in [
+                "ATLAS Host Isolation Loopback In",
+                "ATLAS Host Isolation Loopback Out",
+                "ATLAS Host Isolation Management In",
+                "ATLAS Host Isolation Management Out",
                 "ATLAS Host Isolation Outbound",
                 "ATLAS Host Isolation Inbound",
                 "ATLAS Host Isolation Loopback Allow",

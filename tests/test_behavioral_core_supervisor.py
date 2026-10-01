@@ -229,7 +229,7 @@ def test_zero_bypass_invariant():
             "source_system": "Endpoint-Sensor-Alpha",
             "event_data": {
                 "name": "mimikatz.exe",
-                "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "hash": "a9359e0a0d922119c4d9ad638d172fe4d509f635677c7b640822f3fcfdcf351b",
                 "action": "create"
             }
         },

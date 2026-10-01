@@ -565,13 +565,48 @@ class DefenceResponseEngine:
                         act.actual_result = f"Quarantine Failed: Source file '{act.target}' does not exist."
                     else:
                         fname = os.path.basename(act.target)
-                        dest = os.path.join(self.quarantine_dir, f"{fname}_{int(time.time())}.quarantine")
-                        shutil.move(act.target, dest)
-                        act.rollback_data = {"original_path": act.target, "quarantine_path": dest}
+                        dest = os.path.join(self.quarantine_dir, f"{fname}_{int(time.time())}.quarantine_vault")
+                        # 1. Compute hash and read file bytes for secure vault neutralization
+                        file_hash = "UNKNOWN"
+                        file_size = os.path.getsize(act.target)
+                        try:
+                            import hashlib
+                            h = hashlib.sha256()
+                            with open(act.target, "rb") as f_in:
+                                raw_bytes = f_in.read()
+                                h.update(raw_bytes)
+                            file_hash = h.hexdigest()
+
+                            # 2. Vault neutralization: XOR-encode binary payload (0xA5) to render executable headers inert
+                            neutralized = bytes([b ^ 0xA5 for b in raw_bytes])
+                            with open(dest, "wb") as f_out:
+                                f_out.write(neutralized)
+                            os.remove(act.target)
+                        except Exception:
+                            # Fallback to atomic move
+                            shutil.move(act.target, dest)
+
+                        # 3. Log to database quarantine vault
+                        qid = None
+                        try:
+                            import database
+                            qid = database.add_quarantine_record({
+                                'original_path': act.target,
+                                'quarantine_path': dest,
+                                'file_name': fname,
+                                'sha256': file_hash,
+                                'file_size': file_size,
+                                'threat_name': act.parameters.get('threat_name', 'Malicious.HostPayload'),
+                                'metadata': {'playbook_id': getattr(act, 'playbook_id', 'manual')}
+                            })
+                        except Exception as e:
+                            self.logger.warning(f"Failed to record quarantine to database: {e}")
+
+                        act.rollback_data = {"original_path": act.target, "quarantine_path": dest, "quarantine_id": qid}
                         verified, v_msg = self.verify_action_execution("QUARANTINE_FILE", act.target)
                         act.status = "VERIFIED" if verified else "FAILED"
                         act.verification_status = "VERIFIED" if verified else "FAILED_VERIFICATION"
-                        act.actual_result = f"File quarantined to {dest}. {v_msg}"
+                        act.actual_result = f"File quarantined securely to {dest} (Hash: {file_hash[:16]}...). {v_msg}"
 
                 elif act.action_type == "SUSPEND_PROCESS":
                     try:
@@ -617,7 +652,8 @@ class DefenceResponseEngine:
                 elif act.action_type in ["ROLLBACK_VSS", "RESTORE_VSS"]:
                     from intelligence.rollback import get_rollback_manager
                     rm = get_rollback_manager()
-                    vss_res = rm.attempt_vss_recovery()
+                    target_files = [act.target] if (act.target and os.path.exists(os.path.dirname(os.path.abspath(act.target)))) else None
+                    vss_res = rm.attempt_vss_recovery(target_files=target_files)
                     act.status = "VERIFIED" if vss_res.get("success") else "FAILED"
                     act.verification_status = "VERIFIED" if vss_res.get("success") else "FAILED_VERIFICATION"
                     act.actual_result = vss_res.get("message", "VSS recovery evaluated.")
@@ -626,7 +662,8 @@ class DefenceResponseEngine:
                     from intelligence.rollback import get_rollback_manager
                     rm = get_rollback_manager()
                     desc = act.reason or f"ATLAS Pre-Remediation Checkpoint ({act.target})"
-                    ok = rm.create_vss_snapshot(description=desc)
+                    create_func = getattr(rm, "create_vss_snapshot", getattr(rm, "create_system_restore_point", None))
+                    ok = create_func(description=desc) if create_func else False
                     act.status = "VERIFIED" if ok else "FAILED"
                     act.verification_status = "VERIFIED" if ok else "FAILED_VERIFICATION"
                     act.actual_result = "System restore point created successfully." if ok else "Restore point creation unavailable or disabled by OS policy."

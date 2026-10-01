@@ -320,6 +320,25 @@ class SQLiteDriver(DatabaseDriver):
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_settings_audit_mod ON settings_audit_log(module)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_settings_audit_key ON settings_audit_log(setting_key)')
 
+        # Quarantine Vault Tracking Schema
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS quarantine_vault (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                quarantine_id TEXT UNIQUE,
+                original_path TEXT,
+                quarantine_path TEXT,
+                file_name TEXT,
+                sha256 TEXT,
+                file_size INTEGER,
+                threat_name TEXT DEFAULT 'Suspected.Malware',
+                quarantined_at TEXT,
+                status TEXT DEFAULT 'QUARANTINED',
+                metadata TEXT
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_quarantine_id ON quarantine_vault(quarantine_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_quarantine_sha ON quarantine_vault(sha256)')
+
         # Migration: add analyst_confirmed_count if upgrading existing DB schema
         try:
             cursor.execute("ALTER TABLE behavior_patterns ADD COLUMN analyst_confirmed_count INTEGER DEFAULT 0")
@@ -1370,6 +1389,67 @@ class SQLiteDriver(DatabaseDriver):
         conn.commit()
         conn.close()
 
+    def add_quarantine_record(self, record: Dict[str, Any]) -> str:
+        """Insert a quarantined file record into SQLite."""
+        qid = record.get('quarantine_id') or f"quar_{int(time.time())}_{os.urandom(3).hex()}"
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        now_str = datetime.now(timezone.utc).isoformat()
+        cursor.execute('''
+            INSERT OR REPLACE INTO quarantine_vault
+            (quarantine_id, original_path, quarantine_path, file_name, sha256, file_size, threat_name, quarantined_at, status, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            qid,
+            record.get('original_path', ''),
+            record.get('quarantine_path', ''),
+            record.get('file_name', ''),
+            record.get('sha256', ''),
+            record.get('file_size', 0),
+            record.get('threat_name', 'Suspected.Malware'),
+            record.get('quarantined_at', now_str),
+            record.get('status', 'QUARANTINED'),
+            json.dumps(record.get('metadata', {}))
+        ))
+        conn.commit()
+        conn.close()
+        return qid
+
+    def get_quarantine_records(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """Retrieve recent quarantined file records."""
+        conn = self.get_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT quarantine_id, original_path, quarantine_path, file_name, sha256, file_size, threat_name, quarantined_at, status, metadata
+            FROM quarantine_vault
+            ORDER BY id DESC
+            LIMIT ?
+        ''', (limit,))
+        rows = cursor.fetchall()
+        results = []
+        for r in rows:
+            meta = {}
+            try:
+                if r['metadata']:
+                    meta = json.loads(r['metadata'])
+            except Exception:
+                pass
+            results.append({
+                'quarantine_id': r['quarantine_id'],
+                'original_path': r['original_path'],
+                'quarantine_path': r['quarantine_path'],
+                'file_name': r['file_name'],
+                'sha256': r['sha256'],
+                'file_size': r['file_size'],
+                'threat_name': r['threat_name'],
+                'quarantined_at': r['quarantined_at'],
+                'status': r['status'],
+                'metadata': meta
+            })
+        conn.close()
+        return results
+
     def get_forensic_evidence_chain(self, root_id: str) -> Dict[str, Any]:
         """
         Extracts the verifiable, relational end-to-end forensic evidence chain
@@ -1748,6 +1828,8 @@ def reset_settings(*args, **kwargs): return _ACTIVE_DB.reset_settings(*args, **k
 def get_settings_audit_log(*args, **kwargs): return _ACTIVE_DB.get_settings_audit_log(*args, **kwargs)
 def record_settings_audit(*args, **kwargs): return _ACTIVE_DB.record_settings_audit(*args, **kwargs)
 def get_forensic_evidence_chain(*args, **kwargs): return _ACTIVE_DB.get_forensic_evidence_chain(*args, **kwargs)
+def add_quarantine_record(*args, **kwargs): return _ACTIVE_DB.add_quarantine_record(*args, **kwargs)
+def get_quarantine_records(*args, **kwargs): return _ACTIVE_DB.get_quarantine_records(*args, **kwargs)
 
 
 if __name__ == "__main__":

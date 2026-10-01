@@ -12,6 +12,7 @@ import time
 import logging
 import platform
 import subprocess
+import re
 from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Optional
@@ -105,27 +106,114 @@ class VSSRollbackManager:
 
         return False
 
+    create_vss_snapshot = create_system_restore_point
+
+    def get_shadow_volumes(self) -> List[Dict[str, str]]:
+        """Parse available Volume Shadow Copy device volumes and creation dates."""
+        if self.os_name != "Windows":
+            return []
+
+        try:
+            res = subprocess.run(["vssadmin", "list", "shadows"], capture_output=True, text=True, timeout=8)
+            output = res.stdout
+            volumes = []
+            
+            # Extract Shadow Copy Volume device paths and creation times
+            vol_matches = re.findall(r"Shadow Copy Volume:\s*(\\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy\d+)", output, re.IGNORECASE)
+            time_matches = re.findall(r"Creation Time:\s*([^\r\n]+)", output, re.IGNORECASE)
+            
+            for idx, vol in enumerate(vol_matches):
+                ctime = time_matches[idx].strip() if idx < len(time_matches) else "Unknown"
+                volumes.append({
+                    "shadow_volume": vol,
+                    "creation_time": ctime,
+                    "index": idx + 1
+                })
+            return volumes
+        except Exception as e:
+            logger.debug(f"Failed to query shadow volumes: {e}")
+            return []
+
     def verify_recovery_snapshot(self) -> Dict[str, Any]:
         """Verify existence and status of Volume Shadow Copies on Windows."""
         if self.os_name != "Windows":
             return {"vss_available": False, "reason": "Non-Windows Operating System"}
 
         try:
-            res = subprocess.run(["vssadmin", "list", "shadows"], capture_output=True, text=True, timeout=5)
-            output = res.stdout
-            count = output.count("Contents of shadow copy set")
+            volumes = self.get_shadow_volumes()
+            count = len(volumes)
             return {
                 "vss_available": count > 0,
                 "shadow_copy_count": count,
-                "verification_status": "VALID" if count > 0 else "NO_SNAPSHOTS_FOUND",
-                "raw_summary": output[:300]
+                "volumes": volumes,
+                "latest_volume": volumes[-1]["shadow_volume"] if volumes else None,
+                "verification_status": "VALID" if count > 0 else "NO_SNAPSHOTS_FOUND"
             }
         except Exception as e:
             return {"vss_available": False, "verification_status": "ERROR", "reason": str(e)}
 
-    def attempt_vss_recovery(self) -> Dict[str, Any]:
+    def restore_file_from_shadow_copy(self, file_path: str, shadow_volume: Optional[str] = None) -> Dict[str, Any]:
         """
-        Attempt VSS recovery procedure while returning verification limits.
+        Extract and restore an uncorrupted copy of a file directly from a Windows Volume Shadow Copy.
+        """
+        if self.os_name != "Windows":
+            return {"success": False, "error": "VSS recovery only supported on Windows"}
+
+        try:
+            if not shadow_volume:
+                vols = self.get_shadow_volumes()
+                if not vols:
+                    return {"success": False, "error": "No Volume Shadow Copies available on this host"}
+                # Use newest shadow volume
+                shadow_volume = vols[-1]["shadow_volume"]
+
+            # Convert drive path (C:\Users\...) to shadow path (\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopyX\Users\...)
+            abs_path = os.path.abspath(file_path)
+            drive, rel_path = os.path.splitdrive(abs_path)
+            shadow_src = os.path.join(shadow_volume, rel_path.lstrip("\\/"))
+
+            # Execute safe extraction via PowerShell with LiteralPath
+            ps_script = (
+                f"$src = '{shadow_src}'; "
+                f"$dst = '{abs_path}'; "
+                "if (Test-Path -LiteralPath $src) { "
+                "  Copy-Item -LiteralPath $src -Destination $dst -Force; "
+                "  exit 0; "
+                "} else { exit 2; }"
+            )
+            cmd = ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script]
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+
+            if res.returncode == 0 and os.path.exists(abs_path):
+                new_hash = self._hash_file(abs_path)
+                logger.info(f"Successfully restored file from VSS snapshot: {abs_path} (Hash: {new_hash})")
+                return {
+                    "success": True,
+                    "status": "RESTORED",
+                    "file_path": abs_path,
+                    "sha256": new_hash,
+                    "shadow_source": shadow_src
+                }
+            elif res.returncode == 2:
+                return {
+                    "success": False,
+                    "status": "NOT_FOUND_IN_SNAPSHOT",
+                    "error": f"File was created after snapshot or not captured in shadow copy: {shadow_src}"
+                }
+            else:
+                return {
+                    "success": False,
+                    "status": "EXTRACTION_FAILED",
+                    "error": res.stderr.strip() or "PowerShell copy command exited with error"
+                }
+
+        except Exception as e:
+            logger.error(f"Error during VSS file restore for {file_path}: {e}")
+            return {"success": False, "error": str(e)}
+
+    def attempt_vss_recovery(self, target_files: Optional[List[str]] = None) -> Dict[str, Any]:
+        """
+        Attempt VSS recovery procedure: verifies shadow copies and restores damaged/quarantined files.
         """
         verification = self.verify_recovery_snapshot()
         if not verification.get("vss_available"):
@@ -133,14 +221,29 @@ class VSSRollbackManager:
                 "success": False,
                 "status": "RECOVERY_UNAVAILABLE",
                 "message": "Volume Shadow Copies are not available on this host. Manual backup restore required.",
-                "verification": verification
+                "verification": verification,
+                "restored_files": []
             }
+
+        restored_records = []
+        if target_files:
+            latest_vol = verification.get("latest_volume")
+            for fpath in target_files:
+                r_res = self.restore_file_from_shadow_copy(fpath, shadow_volume=latest_vol)
+                restored_records.append(r_res)
+
+        successful_restores = [r for r in restored_records if r.get("success")]
 
         return {
             "success": True,
-            "status": "RECOVERY_INITIATED",
-            "message": f"Verified {verification.get('shadow_copy_count')} Volume Shadow Copy snapshot(s) available for system rollback.",
-            "verification": verification
+            "status": "RECOVERY_COMPLETED" if (target_files and successful_restores) else "SNAPSHOTS_VERIFIED",
+            "message": (
+                f"Successfully restored {len(successful_restores)}/{len(target_files)} file(s) from VSS snapshot."
+                if target_files else
+                f"Verified {verification.get('shadow_copy_count')} Volume Shadow Copy snapshot(s) available for file restoration."
+            ),
+            "verification": verification,
+            "restored_files": restored_records
         }
 
     @staticmethod

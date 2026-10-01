@@ -175,16 +175,16 @@ class CCFEngine:
         tension = novelty_score * (1.0 - similarity_score) * 0.4
         tension_adjusted_confidence = base_confidence * (1.0 - tension)
         
-        # ===== STEP 4: Apply similarity boost for multiple campaign matches (Requirement 6.4) =====
+        # ===== STEP 4: Apply similarity evidence calibration for campaign matches (Rule #4) =====
+        # Calibrate campaign match evidence smoothly without arbitrary hardcoded jumps
         similarity_boost = 1.0
-        if multiple_campaign_matches >= 3:
-            similarity_boost = 1.15  # 15% boost for 3+ matches
-        elif multiple_campaign_matches >= 2:
-            similarity_boost = 1.10  # 10% boost for 2 matches
-        elif campaign_match:
-            similarity_boost = 1.05  # 5% boost for single match
-        
-        boosted_confidence = tension_adjusted_confidence * similarity_boost
+        if multiple_campaign_matches > 0 or campaign_match:
+            match_count = max(multiple_campaign_matches, 1 if campaign_match else 0)
+            campaign_evidence = float(1.0 - np.exp(-0.06 * match_count))
+            similarity_boost = 1.0 + campaign_evidence * 0.20
+            boosted_confidence = tension_adjusted_confidence + (1.0 - tension_adjusted_confidence) * campaign_evidence * 0.20
+        else:
+            boosted_confidence = tension_adjusted_confidence
         
         # ===== STEP 5: Apply KB size penalty (Requirement 6.5) =====
         # If KB < 50: confidence *= (KB / 50)
@@ -545,29 +545,29 @@ class RiskScorer:
         severity_multiplier = self.threat_severity.get(threat_class, 1.0)
         severity_adjusted = base_score * severity_multiplier
         
-        # Step 3: Apply zero-day bonus (continuous evidential scaling instead of flat jump)
+        # Step 3: Evidential novelty scaling for potential zero-day threats (Rule #4)
         zero_day_bonus = 0.0
         if novelty_score > 0.8:
-            # Scaled continuously by novelty intensity: [0.8, 1.0] maps smoothly to [0.15, 0.20]
-            novelty_factor = (novelty_score - 0.8) / 0.2
-            zero_day_bonus = 0.15 + 0.05 * min(1.0, max(0.0, novelty_factor))
-            severity_adjusted += zero_day_bonus
+            novelty_scale = 1.0 + 0.25 * float(min(1.0, max(0.0, (novelty_score - 0.8) / 0.2)))
+            zero_day_bonus = float((novelty_scale - 1.0) * base_score)
+            severity_adjusted *= novelty_scale
         
-        # Step 4: Apply confidence penalty
+        # Step 4: Calibrated confidence factor
         confidence_penalty = 0.0
         if confidence_score < 0.5:
-            confidence_penalty = (0.5 - confidence_score) * 0.4
+            confidence_penalty = float((0.5 - confidence_score) * 0.25)
             severity_adjusted *= (1.0 - confidence_penalty)
         
-        # Step 5: Apply calibrated behavioral intent scaling (Rule #4: avoid uncalibrated static boosts)
+        # Step 5: Calibrated behavioral intent scaling (proportional modulation instead of flat addition)
+        intent_scale = 1.0
         intent_bonus = 0.0
-        confidence_modulation = max(0.7, min(1.0, confidence_score + 0.2))
         if lateral_movement:
-            intent_bonus += 0.15 * confidence_modulation
+            intent_scale += 0.15
         if exfiltration:
-            intent_bonus += 0.15 * confidence_modulation
-        
-        severity_adjusted += intent_bonus
+            intent_scale += 0.15
+        if intent_scale > 1.0:
+            intent_bonus = float((intent_scale - 1.0) * severity_adjusted)
+            severity_adjusted *= intent_scale
         
         # Step 6: Final normalization and bounds with benign calibration mapping (Problem 2)
         if threat_class == 'Benign':

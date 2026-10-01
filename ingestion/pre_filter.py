@@ -45,9 +45,10 @@ class StaticPreFilterEngine:
 
     def _init_default_signatures(self):
         """Initialize standard high-risk static indicators."""
-        # Known ransomware/malware test hashes
+        # Known ransomware/malware test hashes (zero-byte hash strictly excluded)
         sample_malicious_hashes = {
-            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855": {"name": "Test.Malware.SHA256", "class": "ransomware"},
+            "a9359e0a0d922119c4d9ad638d172fe4d509f635677c7b640822f3fcfdcf351b": {"name": "HackTool.Mimikatz.SHA256", "class": "hacktool"},
+            "ed01ebf83334a1f6f1648878522351ce3fb403c6ab8dce5479c419e18cd91f0a": {"name": "WannaCry.SHA256", "class": "ransomware"},
             "44d88612fea8a8f36de82e1278abb02f": {"name": "EICAR-Test-File", "class": "test_virus"},
             "25a2653207908b9815594d75438848d7": {"name": "WannaCry.Ransomware", "class": "ransomware"}
         }
